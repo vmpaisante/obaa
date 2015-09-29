@@ -26,3 +26,9 @@
 *.exe
 *.out
 *.app
+
+# Compilation
+Release+Asserts/
+
+# All files ending with ~
+*~
