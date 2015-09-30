@@ -1,6 +1,6 @@
 ##===--------------------- Makefile ------------------------*- Makefile -*-===##
 #
-#         Range Based Alias Analysis for The LLVM Compiler
+#         Offset Based Alias Analysis for The LLVM Compiler
 #
 ##===----------------------------------------------------------------------===##
 
@@ -8,7 +8,7 @@
  LEVEL = ../../..
 
 # Name of the library to build
-LIBRARYNAME = RangeBasedAliasAnalysis
+LIBRARYNAME = OffsetBasedAliasAnalysis
 
 # Make the shared library become a loadable module so the tools can 
 # dlopen/dlsym on the resulting library.

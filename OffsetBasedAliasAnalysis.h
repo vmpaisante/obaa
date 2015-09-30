@@ -1,16 +1,16 @@
-//===--- RangeBasedAliasAnalysis.h - Pass definition ----------*- C++ -*-===//
+//===--- OffsetBasedAliasAnalysis.h - Pass definition ----------*- C++ -*-===//
 //
-//             Range Based Alias Analysis for The LLVM Compiler
+//             Offset Based Alias Analysis for The LLVM Compiler
 //
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief This file contains the declaration of the Range Based Alias Analy-
+/// \brief This file contains the declaration of the Offset Based Alias Analy-
 /// sis pass.
 ///
 //===----------------------------------------------------------------------===//
-#ifndef __RANGE_BASED_ALIAS_ANALYSIS_H__
-#define __RANGE_BASED_ALIAS_ANALYSIS_H__
+#ifndef __OFFSET_BASED_ALIAS_ANALYSIS_H__
+#define __OFFSET_BASED_ALIAS_ANALYSIS_H__
 
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -22,13 +22,13 @@ namespace llvm
 /// Forward declarations
 //...
 
-class RangeBasedAliasAnalysis : public ModulePass, public AliasAnalysis
+class OffsetBasedAliasAnalysis : public ModulePass, public AliasAnalysis
 {
   public:
   
   /// LLVM framework methods and atributes
   static char ID; // Class identification, replacement for typeinfo
-  RangeBasedAliasAnalysis() : ModulePass(ID){}
+  OffsetBasedAliasAnalysis() : ModulePass(ID){}
   void getAnalysisUsage(AnalysisUsage &AU) const override;
   bool runOnModule(Module &M) override;
   
