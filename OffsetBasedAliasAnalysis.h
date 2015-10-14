@@ -16,11 +16,13 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Pass.h"
 
+#include <set>
+
 namespace llvm
 {
 
 /// Forward declarations
-//...
+class RangedPointer;
 
 class OffsetBasedAliasAnalysis : public ModulePass, public AliasAnalysis
 {
@@ -45,6 +47,14 @@ class OffsetBasedAliasAnalysis : public ModulePass, public AliasAnalysis
     return this;
   }
   
+  private:
+  std::map<const Value*, RangedPointer*> RangedPointers;
+  std::set<const Value*> AllPointers;
+  std::set<const StoreInst*> RelevantStores;
+  void gatherPointers(Module &M);
+  void simpleConnect();
+  void getNarrowingData();
+  void printDOT(Module &M, std::string stage);
 };
 
 }
