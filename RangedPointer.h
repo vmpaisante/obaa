@@ -39,7 +39,7 @@ class RangedPointer
     Null = 4
   };
   
-  RangedPointer(const Value* pointer);
+  RangedPointer(const Value*);
   const Value* getPointer();
   enum PointerTypes getPointerType();
   std::set<Address*>::iterator addr_begin();
@@ -48,17 +48,17 @@ class RangedPointer
   std::set<Address*>::iterator bases_begin();
   std::set<Address*>::iterator bases_end();
   
-  void processInitialAddresses(OffsetBasedAliasAnalysis* analysis);
+  void processInitialAddresses(OffsetBasedAliasAnalysis*);
   
   void setPointerType(PointerTypes);
   
   void print();
   
   private:  
-  const Value* Pointer;
-  std::set<Address*> Addresses;
-  std::set<Address*> Bases;
-  PointerTypes PointerType;
+  const Value* pointer;
+  std::set<Address*> addresses;
+  std::set<Address*> bases;
+  PointerTypes pointerType;
 
 };
 

@@ -41,14 +41,14 @@ class NarrowingOp
   const Value* cmp_v;
   Offset context;
   
-  NarrowingOp* contextualize(Offset c);
+  NarrowingOp contextualize(Offset c);
 };
 
 class WideningOp
 {
   public:
-  bool positive;
-  bool negative;
+  Offset before;
+  Offset after;
   
 };
 

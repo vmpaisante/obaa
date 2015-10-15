@@ -15,7 +15,7 @@
 
 using namespace llvm;
 
-RangedPointer::RangedPointer(const Value* pointer){}
+RangedPointer::RangedPointer(const Value* p){}
 const Value* RangedPointer::getPointer(){}
 enum RangedPointer::PointerTypes RangedPointer::getPointerType(){}
 std::set<Address*>::iterator RangedPointer::addr_begin(){}
@@ -23,7 +23,7 @@ std::set<Address*>::iterator RangedPointer::addr_end(){}
 bool RangedPointer::addr_empty(){}
 std::set<Address*>::iterator RangedPointer::bases_begin(){}
 std::set<Address*>::iterator RangedPointer::bases_end(){}
-void RangedPointer::setPointerType(PointerTypes){}
+void RangedPointer::setPointerType(PointerTypes pt){}
 void RangedPointer::print(){}
 
-void RangedPointer::processInitialAddresses(OffsetBasedAliasAnalysis* analysis){}
+void RangedPointer::processInitialAddresses(OffsetBasedAliasAnalysis* a){}

@@ -14,4 +14,4 @@
 
 using namespace llvm;
 
-NarrowingOp* NarrowingOp::contextualize(Offset c){}
+NarrowingOp NarrowingOp::contextualize(Offset c){}
