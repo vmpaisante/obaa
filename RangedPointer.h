@@ -5,63 +5,71 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief 
+/// \brief
 ///
 //===----------------------------------------------------------------------===//
 #ifndef __RANGED_POINTER_H__
 #define __RANGED_POINTER_H__
 
+// Project's includes
+#include "Offset.h"
+#include "Address.h"
+// llvm's includes
+#include "llvm/IR/Value.h"
+#include "llvm/IR/Use.h"
+// libc includes
 #include <set>
 
 namespace llvm {
 
 /// Forward declarations
-class Value;
-class Address;
-class Offset;
-class Value;
-class Use;
 class OffsetBasedAliasAnalysis;
 
 /// \brief Pointer representation in which each pointer is a set of
 /// possible addresses
-class RangedPointer
-{
+class RangedPointer {
   friend class Address;
-  
-  public:
-  enum PointerTypes
-  {
-    Unk = 0,
-    Alloc = 1,
-    Phi = 2,
-    Cont = 3,
-    Null = 4
-  };
-  
-  RangedPointer(const Value*);
-  const Value* getPointer();
+
+public:
+  enum PointerTypes { Unk = 0, Alloc = 1, Phi = 2, Cont = 3, Null = 4 };
+
+  // Contructors and destructors
+  RangedPointer(const Value *pointer);
+  RangedPointer(const Value *pointer, PointerTypes pointer_type);
+  RangedPointer(RangedPointer *);
+
+  // Functions that provide the object's information
+  const Value *getPointer();
   enum PointerTypes getPointerType();
-  std::set<Address*>::iterator addr_begin();
-  std::set<Address*>::iterator addr_end();
+  std::set<Address *>::iterator addr_begin();
+  std::set<Address *>::iterator addr_end();
   bool addr_empty();
-  std::set<Address*>::iterator bases_begin();
-  std::set<Address*>::iterator bases_end();
-  
-  void processInitialAddresses(OffsetBasedAliasAnalysis*);
-  
+  std::set<Address *>::iterator bases_begin();
+  std::set<Address *>::iterator bases_end();
+
+  // Functions that set the object's information
   void setPointerType(PointerTypes);
-  
+
+  // Function tha prints the object's information
   void print();
-  
-  private:  
-  const Value* pointer;
-  std::set<Address*> addresses;
-  std::set<Address*> bases;
+
+  // Function that finds the pointer's possible addresses,
+  //  this is the most important feature of this class.
+  void processInitialAddresses(OffsetBasedAliasAnalysis *);
+
+private:
+  const Value *pointer;
+  std::set<Address *> addresses;
+  std::set<Address *> bases;
   PointerTypes pointerType;
-
+  // members that help topological ordering and scc finding
+  int color;
+  int scc;
+  // function and structures for the local analysis
+  RangedPointer *localTree;
+  std::map<RangedPointer *, std::pair<int, Range *>> path;
+  void getUniquePath();
 };
-
 }
 
 #endif
