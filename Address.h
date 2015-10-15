@@ -12,7 +12,6 @@
 #define __ADDRESS_H__
 
 // Project's includes
-#include "RangedPointer.h"
 #include "Offset.h"
 #include "Narrowing.h"
 // llvm's includes
@@ -26,6 +25,9 @@
 #include <deque>
 
 namespace llvm {
+
+/// Forward declarations
+class RangedPointer;
 
 /// Representation of a possible pointer address. It is composed,
 /// essencially, of a base pointer and an offset

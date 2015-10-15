@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Address.h"
+#include "RangedPointer.h"
 
 using namespace llvm;
 

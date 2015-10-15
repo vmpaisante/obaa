@@ -13,7 +13,6 @@
 
 // Project's includes
 #include "Offset.h"
-#include "Address.h"
 // llvm's includes
 #include "llvm/IR/Value.h"
 #include "llvm/IR/Use.h"
@@ -24,6 +23,7 @@ namespace llvm {
 
 /// Forward declarations
 class OffsetBasedAliasAnalysis;
+class Address;
 
 /// \brief Pointer representation in which each pointer is a set of
 /// possible addresses
@@ -34,9 +34,9 @@ public:
   enum PointerTypes { Unk = 0, Alloc = 1, Phi = 2, Cont = 3, Null = 4 };
 
   // Contructors and destructors
-  RangedPointer(const Value *pointer);
-  RangedPointer(const Value *pointer, PointerTypes pointer_type);
-  RangedPointer(RangedPointer *);
+  RangedPointer(const Value*);
+  RangedPointer(const Value*, PointerTypes);
+  RangedPointer(RangedPointer*);
 
   // Functions that provide the object's information
   const Value *getPointer();
@@ -67,7 +67,7 @@ private:
   int scc;
   // function and structures for the local analysis
   RangedPointer *localTree;
-  std::map<RangedPointer *, std::pair<int, Range *>> path;
+  std::map<RangedPointer *, std::pair<int, Offset>> path;
   void getUniquePath();
 };
 }

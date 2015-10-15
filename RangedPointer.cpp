@@ -11,19 +11,43 @@
 
 #include "RangedPointer.h"
 #include "Address.h"
-#include "llvm/IR/Value.h"
 
 using namespace llvm;
 
-RangedPointer::RangedPointer(const Value *p) {}
-const Value *RangedPointer::getPointer() {}
-enum RangedPointer::PointerTypes RangedPointer::getPointerType() {}
-std::set<Address *>::iterator RangedPointer::addr_begin() {}
-std::set<Address *>::iterator RangedPointer::addr_end() {}
-bool RangedPointer::addr_empty() {}
-std::set<Address *>::iterator RangedPointer::bases_begin() {}
-std::set<Address *>::iterator RangedPointer::bases_end() {}
-void RangedPointer::setPointerType(PointerTypes pt) {}
+// Contructors and destructors
+RangedPointer::RangedPointer(const Value *p) { pointer = p; }
+RangedPointer::RangedPointer(const Value *p, PointerTypes pt) {
+  pointer = p;
+  pointerType = pt;
+}
+RangedPointer::RangedPointer(RangedPointer *) {}
+
+// Functions that provide the object's information
+const Value *RangedPointer::getPointer() { return pointer; }
+enum RangedPointer::PointerTypes RangedPointer::getPointerType() {
+  return pointerType;
+}
+std::set<Address *>::iterator RangedPointer::addr_begin() {
+  return addresses.begin();
+}
+std::set<Address *>::iterator RangedPointer::addr_end() {
+  return addresses.end();
+}
+bool RangedPointer::addr_empty() { return addresses.empty(); }
+std::set<Address *>::iterator RangedPointer::bases_begin() {
+  return bases.begin();
+}
+std::set<Address *>::iterator RangedPointer::bases_end() { return bases.end(); }
+
+// Functions that set the object's information
+void RangedPointer::setPointerType(PointerTypes pt) { pointerType = pt; }
+
+// Function tha prints the object's information
 void RangedPointer::print() {}
 
-void RangedPointer::processInitialAddresses(OffsetBasedAliasAnalysis *a) {}
+// Function that finds the pointer's possible addresses,
+//  this is the most important feature of this class.
+void processInitialAddresses(OffsetBasedAliasAnalysis *) {}
+
+// function for the path sensitive analysis
+void RangedPointer::getUniquePath() {}
