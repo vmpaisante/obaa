@@ -56,6 +56,10 @@ class Offset{
   {
     //reps[ID] = new YourOffsetRepresentation(v);
   }
+  Offset(const Value* b, const Value* a) //a = b + offset
+  {
+    //reps[ID] = new YourOffsetRepresentation(b, a);
+  }
   //Add custom offset representation required analyses
   static void getAnalysisUsage(AnalysisUsage &AU)
   {

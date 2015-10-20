@@ -16,6 +16,15 @@
 // llvm's includes
 #include "llvm/IR/Value.h"
 #include "llvm/IR/Use.h"
+#include "llvm/IR/Argument.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/GlobalVariable.h"
+#include "llvm/IR/InstIterator.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Operator.h"
+#include "llvm/IR/User.h"
+#include "llvm/Support/Casting.h"
+#include "llvm/Support/raw_ostream.h"
 // libc includes
 #include <set>
 

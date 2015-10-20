@@ -12,10 +12,19 @@
 #ifndef __OFFSET_BASED_ALIAS_ANALYSIS_H__
 #define __OFFSET_BASED_ALIAS_ANALYSIS_H__
 
+// LLVM's includes
+#include "llvm/Pass.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Pass.h"
-
+#include "llvm/IR/Module.h"
+#include "llvm/IR/InstIterator.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/ADT/Statistic.h"
+// libc's includes
+#include <ctime>
+#include <iostream>
+#include <fstream>
+#include <system_error>
 #include <set>
 
 namespace llvm
@@ -46,6 +55,10 @@ class OffsetBasedAliasAnalysis : public ModulePass, public AliasAnalysis
       return (AliasAnalysis*)this;
     return this;
   }
+  
+  // Function that returns the ranged pointer corresponding
+  //  to the value given
+  RangedPointer* getRangedPointer(const Value*);
   
   private:
   std::map<const Value*, RangedPointer*> RangedPointers;

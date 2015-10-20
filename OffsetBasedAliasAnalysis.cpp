@@ -16,19 +16,6 @@
 #include "RangedPointer.h"
 #include "Narrowing.h"
 #include "Address.h"
-// LLVM's includes
-#include "llvm/Pass.h"
-#include "llvm/Analysis/Passes.h"
-#include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/InstIterator.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/ADT/Statistic.h"
-// libc's includes
-#include <ctime>
-#include <iostream>
-#include <fstream>
-#include <system_error>
 
 //Statistics and debug
 #define DEBUG_TYPE "obaa"
@@ -45,6 +32,16 @@ using namespace llvm;
 
 // Prints a DOT graph of the dependence graph
 void OffsetBasedAliasAnalysis::printDOT(Module &M, std::string stage){}
+
+// Returns the ranged pointer corresponding to such Value
+RangedPointer* OffsetBasedAliasAnalysis::getRangedPointer(const Value* value) {
+  const Type *type = value->getType();
+  // TODO: add assertion
+  if(!type->isPointerTy()) return NULL;
+  if(RangedPointers[value] == NULL)
+    RangedPointers[value] = new RangedPointer(value, RangedPointer::Unk);
+  return RangedPointers[value];
+}
 
 /// \brief LLVM framework support function
 void OffsetBasedAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const
