@@ -5,47 +5,58 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief
+/// This is a simple interface dedicated to hold information about narrowing
+/// and widening operations for obaa. Since these operations are executed
+/// last in obaa, these helper structures are necessary for storage.
 ///
 //===----------------------------------------------------------------------===//
 #ifndef __NARROWING_H__
 #define __NARROWING_H__
 
-// Project's includes
+// local includes
 #include "Offset.h"
 // llvm's includes
-#include "llvm/IR/Value.h"
-#include "llvm/IR/Instructions.h"
 #include "llvm/IR/InstrTypes.h"
 // libc includes
 #include <set>
-#include <map>
-#include <deque>
 
 namespace llvm {
 
-/// classes that help implementing the narrowing operations
+// Forward declarations
+class Value;
+class PHINode;
+
+/// \brief struct that holds comparisons in the program. It is useful 
+/// to create in obaa the narrowing operators.
 class NarrowingData {
 public:
-  CmpInst::Predicate cmp_op;
-  Value *cmp_v1;
-  Value *cmp_v2;
+  const CmpInst::Predicate cmpOp;
+  const Value *cmpV1;
+  const Value *cmpV2;
   std::set<const PHINode *> sigmas;
+  
+  NarrowingData(CmpInst::Predicate op, Value* v1, Value* v2) : cmpOp(op), 
+    cmpV1(v1), cmpV2(v2) { }
 };
 
-class NarrowingOp {
-public:
-  CmpInst::Predicate cmp_op;
-  const Value *cmp_v;
+/// \brief struct that hold information about a narrowing operation to be 
+/// performed by obaa
+struct NarrowingOp {
+  const CmpInst::Predicate cmpOp;
+  const Value *cmpV;
   Offset context;
 
-  NarrowingOp contextualize(Offset c);
+  NarrowingOp(CmpInst::Predicate op, Value* v) : cmpOp(op), cmpV(v) { }
+  NarrowingOp contextualize(const Offset c);
 };
 
-class WideningOp {
-public:
-  Offset before;
-  Offset after;
+/// \brief struct that hold information about a widening operation to be 
+/// performed by obaa
+struct WideningOp {
+  const Offset before;
+  const Offset after;
+  
+  WideningOp(const Offset b, const Offset a) : before(b), after(a) { }
 };
 }
 

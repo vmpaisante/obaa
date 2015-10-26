@@ -11,20 +11,23 @@
 #ifndef __ADDRESS_H__
 #define __ADDRESS_H__
 
-// local includes
+// Project's includes
 #include "Offset.h"
 #include "Narrowing.h"
 // llvm's includes
-// c++ includes
-#include <deque>
-#include <map>
+#include "llvm/IR/Value.h"
+#include "llvm/IR/Argument.h"
+#include "llvm/Support/Casting.h"
+#include "llvm/Support/raw_ostream.h"
+// libc includes
 #include <set>
+#include <map>
+#include <deque>
 
 namespace llvm {
 
 /// Forward declarations
 class RangedPointer;
-class Vaulue;
 
 /// Representation of a possible pointer address. It is composed,
 /// essencially, of a base pointer and an offset
@@ -57,8 +60,8 @@ private:
   RangedPointer *addressee;
   Offset offset;
   // Structures that hold the narrowing and widening operators
-  std::map<const Value *, const NarrowingOp> narrowingOps;
-  std::map<const Value *, const WideningOp> wideningOps;
+  std::map<const Value *, NarrowingOp> narrowingOps;
+  std::map<const Value *, WideningOp> wideningOps;
   // Holds wether this address has been widened
   bool widened;
   // Holds wether the base is an argument or there is an argument on the path
