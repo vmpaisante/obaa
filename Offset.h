@@ -114,21 +114,21 @@ public:
   }
   
   /// \brief Adds two offsets
-  Offset operator+(const Offset& Other) {
+  Offset operator+(const Offset& Other) const {
     Offset result;
     for (auto i : result.reps) {
-      int ID = i.first;
-      result.reps[ID] = reps[ID]->add(Other.reps.at(ID));
+      const int ID = i.first;
+      result.reps[ID] = reps.at(ID)->add(Other.reps.at(ID));
     }
     return result;
     
   }
   
   /// \brief Answers true if two offsets are disjoints
-  bool operator!=(const Offset& Other) {
+  bool operator!=(const Offset& Other) const {
     for (auto i : reps) {
-      int ID = i.first;
-      if(reps[ID]->disjoint(Other.reps.at(ID))) return true;
+      const int ID = i.first;
+      if(reps.at(ID)->disjoint(Other.reps.at(ID))) return true;
     }
     return false;
   }
@@ -140,10 +140,10 @@ public:
   void widen(const WideningOp& widening_op) { }
   
   /// \brief Prints the offset
-  void print() { }
+  void print() const { }
   
 private:
-  std::map<int, OffsetRepresentation*> reps;
+  std::map<const int, OffsetRepresentation*> reps;
 };
 
 }

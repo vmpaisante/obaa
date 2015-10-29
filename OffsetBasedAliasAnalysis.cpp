@@ -1,12 +1,14 @@
-//===------------------- Address.cpp - Pass definition ----------*- C++ -*-===//
+//===-- OffsetBasedAliasAnalysis.cpp - Pass definition ----------*- C++ -*-===//
 //
 //             Offset Based Alias Analysis for The LLVM Compiler
 //
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief
+/// \brief This file contains the declaration of the Offset Based Alias Analy-
+/// sis pass.
 ///
 //===----------------------------------------------------------------------===//
 
-#include "Address.h"
+// Project's includes
+#include "OffsetBasedAliasAnalysis.h"

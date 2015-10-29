@@ -5,7 +5,10 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief This file contains the declaration of the Address class.
+/// This file contains the declaration of the Address class. An address
+/// is composed mainly of a base and an offset, but here, an address can hold
+/// it's addressee, widening and narrowing operations that should happen and
+/// some other simple data. 
 ///
 //===----------------------------------------------------------------------===//
 #ifndef __ADDRESS_H__
@@ -14,7 +17,6 @@
 // local includes
 #include "Offset.h"
 #include "Narrowing.h"
-// llvm's includes
 // c++ includes
 #include <deque>
 #include <map>
@@ -22,40 +24,39 @@
 
 namespace llvm {
 
-/// Forward declarations
+// Forward declarations
 class RangedPointer;
 class Vaulue;
 
-/// Representation of a possible pointer address. It is composed,
+/// \brief Representation of a possible pointer address. It is composed,
 /// essencially, of a base pointer and an offset
 class Address {
 public:
   // Contructors and destructors
-  Address(RangedPointer *a, RangedPointer *b, Offset o);
-  Address(Address *);
+  Address(const RangedPointer *a, const RangedPointer *b, const Offset& o);
+  Address(const Address& a);
   ~Address();
   // Functions that provide the object's information
-  RangedPointer *getBase();
-  RangedPointer *getAddressee();
-  Offset getOffset();
-  bool wasWidened();
-  // Functions that set the object's information
-  void setBase(RangedPointer *);
-  void setOffset(Offset);
-  // Function tha prints the object's informtation
-  void print();
-  // Function that expands an address, this is the most important feature
-  //  of this class.
-  void Expand(std::deque<Address *> &ad, std::set<Address *> &fn);
+  const RangedPointer *getBase() const;
+  const RangedPointer *getAddressee() const;
+  const Offset getOffset() const;
+  bool wasWidened() const;
+  bool hasArgFlag() const;
+  bool hasGlobalFlag() const;
+  /// \brief Function tha prints the object's informtation
+  void print() const;
+  /// \brief Function that expands an address, this is the most important 
+  ///  feature of this class. TODO: do better comment
+  void Expand(std::deque<Address *>& ad, std::set<Address *>& fn);
   // Functions that give the object narrowing and widening operators
-  bool associateNarrowingOp(const Value *, NarrowingOp &);
-  bool associateWideningOp(const Value *, WideningOp &);
+  bool associateNarrowingOp(const Value* v, const NarrowingOp& no);
+  bool associateWideningOp(const Value* v, const WideningOp& wo);
 
 private:
   // Basic contents of an address
-  RangedPointer *base;
-  RangedPointer *addressee;
-  Offset offset;
+  const RangedPointer* base;
+  const RangedPointer* addressee;
+  const Offset offset;
   // Structures that hold the narrowing and widening operators
   std::map<const Value *, const NarrowingOp> narrowingOps;
   std::map<const Value *, const WideningOp> wideningOps;
@@ -63,8 +64,10 @@ private:
   bool widened;
   // Holds wether the base is an argument or there is an argument on the path
   bool argument;
+  // Holds wether the base is a global
+  bool global;
   // Auxilliary map for the expand function
-  std::map<RangedPointer *, Offset> expanded;
+  std::map<const RangedPointer *, const Offset> expanded;
 };
 }
 

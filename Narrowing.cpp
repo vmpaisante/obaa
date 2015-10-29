@@ -1,4 +1,4 @@
-//===------------------- Address.cpp - Pass definition ----------*- C++ -*-===//
+//===----------------- Narrowing.cpp - Pass definition ----------*- C++ -*-===//
 //
 //             Offset Based Alias Analysis for The LLVM Compiler
 //
@@ -9,4 +9,4 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "Address.h"
+#include "Narrowing.h"
