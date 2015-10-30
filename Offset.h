@@ -21,6 +21,7 @@
 
 // llvm's includes
 #include "llvm/IR/InstrTypes.h"
+#include "llvm/Support/raw_ostream.h"
 // libc includes
 #include <map>
 
@@ -74,7 +75,11 @@ public:
 class Offset{
 
 public:
-  /// \brief Add custom offset representation to reps for use in obaa 
+  //Functions someone should alter to add a new offset representation
+  //===--------------------------------------------------------------------===//
+  
+  /// \brief Add custom offset representation to reps for use in obaa.
+  /// This constructor should return a neutral offset element
   Offset() {
     // reps[ID] = new YourOffsetRepresentation();
   }
@@ -84,63 +89,37 @@ public:
     // reps[ID] = new YourOffsetRepresentation(b, a);
   }
   
-  /// \brief Copy contructor 
-  Offset(const Offset& Other) {
-    for (auto i : Other.reps) {
-      reps[i.first] = i.second->copy();
-    }
-  }
-  
-  /// \brief Destructor 
-  ~Offset() {
-    for (auto i : reps) delete i.second;
-  }
-  
   /// \brief Add custom offset representation required analyses
   static void getAnalysisUsage(AnalysisUsage &AU) {
     // AU.addRequired<RequiredAnalysis>();
   }
   
-  /// \brief Add custom offset representation init function
-  static void initRepresentations() { }
+  //Functions that should be left alone on creating new offset representation
+  //===--------------------------------------------------------------------===//
+  
+  /// \brief Copy contructor 
+  Offset(const Offset& Other);
+  
+  /// \brief Destructor 
+  ~Offset();
   
   /// \brief Assignment operator that provides a deep copy
-  Offset& operator=(const Offset& Other) {
-    for (auto i : reps) delete i.second;
-    for (auto i : Other.reps) {
-      reps[i.first] = i.second->copy();
-    }
-    return *this;
-  }
-  
+  Offset& operator=(const Offset& Other);
+   
   /// \brief Adds two offsets
-  Offset operator+(const Offset& Other) const {
-    Offset result;
-    for (auto i : result.reps) {
-      const int ID = i.first;
-      result.reps[ID] = reps.at(ID)->add(Other.reps.at(ID));
-    }
-    return result;
-    
-  }
+  Offset operator+(const Offset& Other) const;
   
   /// \brief Answers true if two offsets are disjoints
-  bool operator!=(const Offset& Other) const {
-    for (auto i : reps) {
-      const int ID = i.first;
-      if(reps.at(ID)->disjoint(Other.reps.at(ID))) return true;
-    }
-    return false;
-  }
+  bool operator!=(const Offset& Other) const;
   
   /// \brief Narrows the offset
-  void narrow(const NarrowingOp& narrowing_op) { }
+  void narrow(const NarrowingOp& narrowing_op);
   
   /// \brief Widens the offset
-  void widen(const WideningOp& widening_op) { }
+  void widen(const WideningOp& widening_op);
   
   /// \brief Prints the offset
-  void print() const { }
+  void print() const;
   
 private:
   std::map<const int, OffsetRepresentation*> reps;

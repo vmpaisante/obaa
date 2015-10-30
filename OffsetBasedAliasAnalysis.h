@@ -23,7 +23,7 @@ namespace llvm
 {
 
 /// Forward declarations
-class RangedPointer;
+class OffsetPointer;
 
 class OffsetBasedAliasAnalysis : public ModulePass, public AliasAnalysis
 {
@@ -48,17 +48,18 @@ public:
     return this;
   }
   
-  /// \brief Function that returns the ranged pointer corresponding
+  /// \brief Function that returns the offset pointer corresponding
   ///  to the value given
-  RangedPointer* getRangedPointer(const Value*);
+  OffsetPointer* getOffsetPointer(const Value*);
   
 private:
-  std::map<const Value*, RangedPointer*> RangedPointers;
+  /// \brief map that contains all the pointers represented
+  std::map<const Value*, OffsetPointer*> OffsetPointers;
   std::set<const Value*> AllPointers;
   std::set<const StoreInst*> RelevantStores;
   /// \brief Gather all pointers from the module
   void gatherPointers(Module &M);
-  /// \brief Connects the ranged pointers by just looking at them
+  /// \brief Connects the offset pointers by just looking at them
   void simpleConnect();
   /// \brief Gets the data used for narrowing operations from the module
   void getNarrowingData();

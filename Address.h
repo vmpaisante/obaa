@@ -25,7 +25,7 @@
 namespace llvm {
 
 // Forward declarations
-class RangedPointer;
+class OffsetPointer;
 class Vaulue;
 
 /// \brief Representation of a possible pointer address. It is composed,
@@ -33,12 +33,12 @@ class Vaulue;
 class Address {
 public:
   // Contructors and destructors
-  Address(const RangedPointer *a, const RangedPointer *b, const Offset& o);
+  Address(const OffsetPointer *a, const OffsetPointer *b, const Offset& o);
   Address(const Address& a);
   ~Address();
   // Functions that provide the object's information
-  const RangedPointer *getBase() const;
-  const RangedPointer *getAddressee() const;
+  const OffsetPointer *getBase() const;
+  const OffsetPointer *getAddressee() const;
   const Offset getOffset() const;
   bool wasWidened() const;
   bool hasArgFlag() const;
@@ -54,8 +54,8 @@ public:
 
 private:
   // Basic contents of an address
-  const RangedPointer* base;
-  const RangedPointer* addressee;
+  const OffsetPointer* base;
+  const OffsetPointer* addressee;
   const Offset offset;
   // Structures that hold the narrowing and widening operators
   std::map<const Value *, const NarrowingOp> narrowingOps;
@@ -67,7 +67,7 @@ private:
   // Holds wether the base is a global
   bool global;
   // Auxilliary map for the expand function
-  std::map<const RangedPointer *, const Offset> expanded;
+  std::map<const OffsetPointer *, const Offset> expanded;
 };
 }
 

@@ -1,4 +1,4 @@
-//===--------------- RangedPointer.h - Pass definition ----------*- C++ -*-===//
+//===--------------- OffsetPointer.h - Pass definition ----------*- C++ -*-===//
 //
 //             Offset Based Alias Analysis for The LLVM Compiler
 //
@@ -10,8 +10,8 @@
 /// other information, like it's type and its local tree.
 ///
 //===----------------------------------------------------------------------===//
-#ifndef __RANGED_POINTER_H__
-#define __RANGED_POINTER_H__
+#ifndef __OFFSET_POINTER_H__
+#define __OFFSET_POINTER_H__
 
 // Project's includes
 #include "Offset.h"
@@ -28,19 +28,19 @@ class Value;
 
 /// \brief Pointer representation in which each pointer is a set of
 /// possible addresses
-class RangedPointer {
+class OffsetPointer {
   
-  // Address is a friend class because on each instance creation, ranged
-  // poineters bases and addresses are updated.
+  // Address is a friend class because on each instance creation, offset
+  // pointers bases and addresses are updated.
   friend class Address;
 
 public:
   enum PointerTypes { Unk = 0, Alloc = 1, Phi = 2, Cont = 3, Null = 4 };
 
   // Contructors and destructors
-  RangedPointer(const Value* v);
-  RangedPointer(const Value* v, PointerTypes pt);
-  RangedPointer(const RangedPointer& rp);
+  OffsetPointer(const Value* v);
+  OffsetPointer(const Value* v, PointerTypes pt);
+  OffsetPointer(const OffsetPointer& rp);
 
   // Functions that provide the object's information
   const Value* getPointer() const;
@@ -70,8 +70,8 @@ private:
   int color;
   int scc;
   // function and structures for the local analysis
-  RangedPointer *localTree;
-  std::map<RangedPointer *, std::pair<int, Offset>> path;
+  OffsetPointer *localTree;
+  std::map<OffsetPointer *, std::pair<int, Offset>> path;
   void getUniquePath();
 };
 }

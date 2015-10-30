@@ -1,4 +1,4 @@
-//===------------- RangedPointer.cpp - Pass definition ----------*- C++ -*-===//
+//===------------- OffsetPointer.cpp - Pass definition ----------*- C++ -*-===//
 //
 //             Offset Based Alias Analysis for The LLVM Compiler
 //
@@ -9,4 +9,4 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "RangedPointer.h"
+#include "OffsetPointer.h"
