@@ -54,9 +54,9 @@ public:
   
 private:
   /// \brief map that contains all the pointers represented
-  std::map<const Value*, OffsetPointer*> OffsetPointers;
-  std::set<const Value*> AllPointers;
-  std::set<const StoreInst*> RelevantStores;
+  std::map<const Value*, OffsetPointer*> offset_pointers;
+  std::set<const Value*> all_pointers;
+  std::set<const StoreInst*> relevant_stores;
   /// \brief Gather all pointers from the module
   void gatherPointers(Module &M);
   /// \brief Connects the offset pointers by just looking at them
@@ -64,7 +64,7 @@ private:
   /// \brief Gets the data used for narrowing operations from the module
   void getNarrowingData();
   /// \brief Function that prints the dependence graph in DOT format
-  void printDOT(Module &M, std::string stage);
+  void printDOT(Module &M, std::string Stage);
 };
 
 }

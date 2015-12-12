@@ -26,15 +26,15 @@ namespace llvm {
 
 // Forward declarations
 class OffsetPointer;
-class Vaulue;
+class Value;
 
 /// \brief Representation of a possible pointer address. It is composed,
 /// essencially, of a base pointer and an offset
 class Address {
 public:
   // Contructors and destructors
-  Address(const OffsetPointer *a, const OffsetPointer *b, const Offset& o);
-  Address(const Address& a);
+  Address(const OffsetPointer *A, const OffsetPointer *B, const Offset& O);
+  Address(const Address& A);
   ~Address();
   // Functions that provide the object's information
   const OffsetPointer *getBase() const;
@@ -47,10 +47,10 @@ public:
   void print() const;
   /// \brief Function that expands an address, this is the most important 
   ///  feature of this class. TODO: do better comment
-  void Expand(std::deque<Address *>& ad, std::set<Address *>& fn);
+  void Expand(std::deque<Address *>& Ad, std::set<Address *>& Fn);
   // Functions that give the object narrowing and widening operators
-  bool associateNarrowingOp(const Value* v, const NarrowingOp& no);
-  bool associateWideningOp(const Value* v, const WideningOp& wo);
+  bool associateNarrowingOp(const Value* V, const NarrowingOp& No);
+  bool associateWideningOp(const Value* V, const WideningOp& Wo);
 
 private:
   // Basic contents of an address
@@ -58,15 +58,15 @@ private:
   const OffsetPointer* addressee;
   const Offset offset;
   // Structures that hold the narrowing and widening operators
-  std::map<const Value *, const NarrowingOp> narrowingOps;
-  std::map<const Value *, const WideningOp> wideningOps;
-  // Holds wether this address has been widened
+  std::map<const Value *, const NarrowingOp> narrowing_ops;
+  std::map<const Value *, const WideningOp> widening_ops;
+  /// \brief Holds wether this address has been widened
   bool widened;
-  // Holds wether the base is an argument or there is an argument on the path
+  /// \brief Holds wether the base is an argument or there is an argument on the path
   bool argument;
-  // Holds wether the base is a global
+  /// \brief Holds wether the base is a global
   bool global;
-  // Auxilliary map for the expand function
+  /// \brief Auxilliary map for the expand function
   std::map<const OffsetPointer *, const Offset> expanded;
 };
 }

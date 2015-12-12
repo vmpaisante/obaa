@@ -32,6 +32,7 @@ class AnalysisUsage;
 class NarrowingOp;
 class WideningOp;
 class Value;
+class OffsetPointer;
 
 /// \brief Abstract class for implementing offset representations.
 /// Use it for testing new integer comparison analyses.
@@ -41,7 +42,7 @@ public:
   OffsetRepresentation();
   
   /// \brief Builds \p pointer's offset using \p base 
-  OffsetRepresentation(Value* base, Value* pointer);
+  OffsetRepresentation(Value* Base, Value* Pointer);
   
   /// \brief Destructor 
   virtual ~OffsetRepresentation() =0;
@@ -56,12 +57,13 @@ public:
   virtual bool disjoint(OffsetRepresentation* Other) =0;
   
   /// \brief Narrows the offset of the respective representation
-  virtual OffsetRepresentation* narrow(OffsetRepresentation* Other, 
-    CmpInst::Predicate cmp) =0;
+  virtual OffsetRepresentation* narrow(CmpInst::Predicate Cmp, 
+    OffsetRepresentation* Other) =0;
   
-  /// \brief Widens the offset of the respective representation
-  virtual OffsetRepresentation* widen(OffsetRepresentation* Other,
-    bool negative, bool positive) =0;
+  /// \brief Widens the offset of the respective representation, Before and 
+  ///   After are given so its possible to calculate direction of growth.
+  virtual OffsetRepresentation* widen(OffsetRepresentation* Before,
+    OffsetRepresentation* After) =0;
   
   /// \brief Prints the offset representation
   void print() { }
@@ -85,7 +87,7 @@ public:
   }
   
   /// \brief Creates the offset occording to \p a = \p b + offset
-  Offset(const Value* b, const Value* a) {
+  Offset(const Value* B, const Value* A) {
     // reps[ID] = new YourOffsetRepresentation(b, a);
   }
   
@@ -112,11 +114,12 @@ public:
   /// \brief Answers true if two offsets are disjoints
   bool operator!=(const Offset& Other) const;
   
-  /// \brief Narrows the offset
-  void narrow(const NarrowingOp& narrowing_op);
+  /// \brief Narrows the offset, Base is nacessary since you only use addresses
+  /// with the same base for the narrowing process. 
+  void narrow(const NarrowingOp& Narrowing_op, OffsetPointer* Base);
   
   /// \brief Widens the offset
-  void widen(const WideningOp& widening_op);
+  void widen(const WideningOp& Widening_op);
   
   /// \brief Prints the offset
   void print() const;

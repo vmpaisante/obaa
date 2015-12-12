@@ -10,6 +10,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "Offset.h"
+#include "Narrowing.h"
+#include "OffsetPointer.h"
+#include "Address.h"
 
 using namespace llvm;
 
@@ -55,15 +58,27 @@ bool Offset::operator!=(const Offset& Other) const {
 }
 
 /// \brief Narrows the offset
-void Offset::narrow(const NarrowingOp& narrowing_op) {
-  for (auto i : reps) {
-    const int ID = i.first;
-    
+void Offset::narrow(const NarrowingOp& Narrowing_op, OffsetPointer* Base) {
+  for(auto ad : Narrowing_op.cmp_v->addresses) {
+    if(ad->getBase() == Base) {
+      Offset narrowing_offset = ad->getOffset() + Narrowing_op.context;
+      for (auto i : reps) {
+        const int ID = i.first;
+        reps[ID] = i.second->narrow(Narrowing_op.cmp_op, 
+          narrowing_offset.reps.at(ID));
+      }   
+    }
   }
 }
 
 /// \brief Widens the offset
-void Offset::widen(const WideningOp& widening_op) { }
+void Offset::widen(const WideningOp& Widening_op) { 
+  for (auto i : reps) {
+    const int ID = i.first;
+    reps[ID] = i.second->widen(Widening_op.before.reps.at(ID), 
+      Widening_op.after.reps.at(ID));
+  }
+}
 
 /// \brief Prints the offset
 void Offset::print() const { 

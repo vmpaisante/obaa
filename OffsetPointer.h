@@ -33,14 +33,15 @@ class OffsetPointer {
   // Address is a friend class because on each instance creation, offset
   // pointers bases and addresses are updated.
   friend class Address;
+  friend class Offset;
 
 public:
   enum PointerTypes { Unk = 0, Alloc = 1, Phi = 2, Cont = 3, Null = 4 };
 
   // Contructors and destructors
-  OffsetPointer(const Value* v);
-  OffsetPointer(const Value* v, PointerTypes pt);
-  OffsetPointer(const OffsetPointer& rp);
+  OffsetPointer(const Value* V);
+  OffsetPointer(const Value* V, PointerTypes Pt);
+  OffsetPointer(const OffsetPointer& Rp);
 
   // Functions that provide the object's information
   const Value* getPointer() const;
@@ -52,25 +53,25 @@ public:
   std::set<Address *>::iterator bases_end() const;
 
   // Functions that set the object's information
-  void setPointerType(PointerTypes pt);
+  void setPointerType(PointerTypes Pt);
 
   /// \brief Function tha prints the object's information
   void print() const;
 
   /// \brief Function that finds the pointer's possible addresses,
   ///  this is the most important feature of this class.
-  void processInitialAddresses(OffsetBasedAliasAnalysis* analysis);
+  void processInitialAddresses(OffsetBasedAliasAnalysis* Analysis);
 
 private:
   const Value *pointer;
   std::set<Address *> addresses;
   std::set<Address *> bases;
-  PointerTypes pointerType;
+  PointerTypes pointer_type;
   // members that help topological ordering and scc finding
   int color;
   int scc;
   // function and structures for the local analysis
-  OffsetPointer *localTree;
+  OffsetPointer *local_tree;
   std::map<OffsetPointer *, std::pair<int, Offset>> path;
   void getUniquePath();
 };
