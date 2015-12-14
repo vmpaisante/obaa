@@ -43,14 +43,14 @@ struct NarrowingData {
 /// performed by obaa
 struct NarrowingOp {
   const CmpInst::Predicate cmp_op;
-  const OffsetPointer* cmp_v;
+  OffsetPointer* const cmp_v;
   const Offset context;
 
   /// \brief constructor that doesn't epecify any context, for using early
-  NarrowingOp(const CmpInst::Predicate Op, const OffsetPointer* V) 
+  NarrowingOp(const CmpInst::Predicate Op, OffsetPointer* const V) 
     : cmp_op(Op), cmp_v(V) { }
   /// \brief Constructor that specify context, for using on address expansion
-  NarrowingOp(const CmpInst::Predicate Op, const OffsetPointer* V, 
+  NarrowingOp(const CmpInst::Predicate Op, OffsetPointer* const V, 
     const Offset C) : cmp_op(Op), cmp_v(V), context(C) { }
   /// \brief Simple function that returns a contextualized version of the 
   /// operator in address expansion

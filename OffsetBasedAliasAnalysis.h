@@ -54,7 +54,7 @@ public:
   
 private:
   /// \brief map that contains all the pointers represented
-  std::map<const Value*, OffsetPointer*> offset_pointers;
+  std::map<const Value*, OffsetPointer* const> offset_pointers;
   std::set<const Value*> all_pointers;
   std::set<const StoreInst*> relevant_stores;
   /// \brief Gather all pointers from the module

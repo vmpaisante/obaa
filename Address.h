@@ -33,12 +33,12 @@ class Value;
 class Address {
 public:
   // Contructors and destructors
-  Address(const OffsetPointer *A, const OffsetPointer *B, const Offset& O);
+  Address(OffsetPointer* const A, OffsetPointer* const B, const Offset& O);
   Address(const Address& A);
   ~Address();
   // Functions that provide the object's information
-  const OffsetPointer *getBase() const;
-  const OffsetPointer *getAddressee() const;
+  OffsetPointer* getBase() const;
+  OffsetPointer* getAddressee() const;
   const Offset getOffset() const;
   bool wasWidened() const;
   bool hasArgFlag() const;
@@ -54,8 +54,8 @@ public:
 
 private:
   // Basic contents of an address
-  const OffsetPointer* base;
-  const OffsetPointer* addressee;
+  OffsetPointer* const base;
+  OffsetPointer* const addressee;
   const Offset offset;
   // Structures that hold the narrowing and widening operators
   std::map<const Value *, const NarrowingOp> narrowing_ops;

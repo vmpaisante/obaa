@@ -64,8 +64,8 @@ public:
 
 private:
   const Value *pointer;
-  std::set<Address *> addresses;
-  std::set<Address *> bases;
+  std::set<Address* > addresses;
+  std::set<Address* > bases;
   PointerTypes pointer_type;
   // members that help topological ordering and scc finding
   int color;
