@@ -60,11 +60,11 @@ private:
   // Structures that hold the narrowing and widening operators
   std::map<const Value *, const NarrowingOp> narrowing_ops;
   std::map<const Value *, const WideningOp> widening_ops;
-  /// \brief Holds wether this address has been widened
+  /// \brief Holds whether this address has been widened
   bool widened;
-  /// \brief Holds wether the base is an argument or there is an argument on the path
+  /// \brief Holds whether the base is an argument or there is an argument on the path
   bool argument;
-  /// \brief Holds wether the base is a global
+  /// \brief Holds whether the base is a global
   bool global;
   /// \brief Auxilliary map for the expand function
   std::map<const OffsetPointer *, const Offset> expanded;
