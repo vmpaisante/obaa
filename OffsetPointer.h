@@ -41,7 +41,6 @@ public:
   // Contructors and destructors
   OffsetPointer(const Value* V);
   OffsetPointer(const Value* V, PointerTypes Pt);
-  OffsetPointer(const OffsetPointer& Rp);
 
   // Functions that provide the object's information
   const Value* getPointer() const;
@@ -63,7 +62,7 @@ public:
   void processInitialAddresses(OffsetBasedAliasAnalysis* Analysis);
 
 private:
-  const Value *pointer;
+  const Value* const pointer;
   std::set<Address* > addresses;
   std::set<Address* > bases;
   PointerTypes pointer_type;
