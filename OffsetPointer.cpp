@@ -125,7 +125,9 @@ void OffsetPointer::processInitialAddresses(OffsetBasedAliasAnalysis* Analysis){
   }
 }
 
-
+void OffsetPointer::getPathToRoot() {
+  
+}
 
 
 

@@ -70,9 +70,9 @@ private:
   int color;
   int scc;
   // function and structures for the local analysis
-  OffsetPointer *local_tree;
-  std::map<OffsetPointer *, std::pair<int, Offset>> path;
-  void getUniquePath();
+  OffsetPointer *local_root;
+  std::map<OffsetPointer *, std::pair<int, Offset>> path_to_root;
+  void getPathToRoot();
 };
 }
 

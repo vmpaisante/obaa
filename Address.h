@@ -62,7 +62,8 @@ private:
   std::map<const Value *, const WideningOp> widening_ops;
   /// \brief Holds whether this address has been widened
   bool widened;
-  /// \brief Holds whether the base is an argument or there is an argument on the path
+  /// \brief Holds whether the base is an argument or there is an argument on 
+  /// the path
   bool argument;
   /// \brief Holds whether the base is a global
   bool global;
