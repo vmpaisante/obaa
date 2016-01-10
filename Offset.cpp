@@ -91,3 +91,15 @@ void Offset::print() const {
   }
   errs() << ")";
 }
+
+/// \brief Prints the offset to a file
+void Offset::print(raw_fd_ostream& fs) const { 
+  bool notFirst = false;
+  fs << "(";
+  for (auto i : reps) {
+    if(notFirst) fs << " & ";
+    else notFirst = true;
+    i.second->print(fs);
+  }
+  fs << ")";
+}

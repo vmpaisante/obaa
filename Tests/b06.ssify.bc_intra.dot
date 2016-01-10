@@ -1,0 +1,21 @@
+digraph grafico {
+"malloc_0x35a38e0" [shape=square];
+"benc_F_0x35a3980" [shape=plaintext];
+"v_0x35a3af0" [shape=egg];
+"arrayidx_0x35a6560" [shape=ellipse];
+"v_0x35a3af0" -> "arrayidx_0x35a6560" [label="()"];
+"arrayidx2_0x35a66d0" [shape=ellipse];
+"v_0x35a3af0" -> "arrayidx2_0x35a66d0" [label="()"];
+"arrayidx5_0x35a6b70" [shape=ellipse];
+"v_0x35a3af0" -> "arrayidx5_0x35a6b70" [label="()"];
+"arrayidx7_0x35a6ce0" [shape=ellipse];
+"v_0x35a3af0" -> "arrayidx7_0x35a6ce0" [label="()"];
+"arrayidx9_0x35a6e50" [shape=ellipse];
+"v_0x35a3af0" -> "arrayidx9_0x35a6e50" [label="()"];
+"arrayidx11_0x35a6fe0" [shape=ellipse];
+"v_0x35a3af0" -> "arrayidx11_0x35a6fe0" [label="()"];
+"argv_0x35a7540" [shape=square];
+"i32 (i32, i32, ...)* bitcast (i32 (...)* @benc_F to i32 (i32, i32, ...)*)_0x35a7ad8" [shape=ellipse];
+"benc_F_0x35a3980" -> "i32 (i32, i32, ...)* bitcast (i32 (...)* @benc_F to i32 (i32, i32, ...)*)_0x35a7ad8" [label="()"];
+"call_0x35a7be0" [shape=square];
+}

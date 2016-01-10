@@ -27,10 +27,14 @@ namespace llvm {
 // Forward declarations
 class OffsetPointer;
 class Value;
+class OffsetBasedAliasAnalysis;
 
 /// \brief Representation of a possible pointer address. It is composed,
 /// essencially, of a base pointer and an offset
 class Address {
+
+friend class OffsetBasedAliasAnalysis;
+
 public:
   // Contructors and destructors
   Address(OffsetPointer* const A, OffsetPointer* const B, const Offset& O);

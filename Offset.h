@@ -67,6 +67,8 @@ public:
   
   /// \brief Prints the offset representation
   void print() { }
+  /// \brief Prints the offset to a file
+  void print(raw_fd_ostream& fs) { }
   
 };
 
@@ -123,6 +125,8 @@ public:
   
   /// \brief Prints the offset
   void print() const;
+  /// \brief Prints the offset to a file
+  void print(raw_fd_ostream& fs) const;
   
 private:
   std::map<const int, OffsetRepresentation*> reps;

@@ -58,6 +58,10 @@ private:
   std::set<const StoreInst*> relevant_stores;
   /// \brief Gather all pointers from the module
   void gatherPointers(Module &M);
+  /// \brief Builds the dependence graph using an intra procedural frame
+  void buildIntraProceduralDepGraph();
+  /// \brief Obtains narrowing information from the module
+  void getNarrowingInfo();
   /// \brief Function that prints the dependence graph in DOT format
   void printDOT(Module &M, std::string Stage);
 };

@@ -13,6 +13,8 @@
 
 // local includes
 #include "OffsetBasedAliasAnalysis.h"
+#include "Address.h"
+#include "Narrowing.h"
 #include "Offset.h"
 #include "OffsetPointer.h"
 // llvm includes
@@ -21,13 +23,16 @@
 #include "llvm/IR/Argument.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Value.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 // STL includes
 #include <set>
+#include <string>
 
 STATISTIC(NumPointers, "Number of pointers from the module");
 STATISTIC(NumRelevantStores, "Number of relevant stores from the module");
@@ -59,9 +64,19 @@ bool OffsetBasedAliasAnalysis::runOnModule(Module &M) {
   /// gathering all pointers and stores
   gatherPointers(M);
   
+  DEBUG_WITH_TYPE("phases", errs() << "Building intra dependence graph\n");
+  /// The second step of the program consists in building
+  /// the intra procedural pointer dependence graph
+  buildIntraProceduralDepGraph();
+  
+  DEBUG_WITH_TYPE("phases", errs() << "Getting narrowing information\n");
+  /// Getting narrowing information
+  getNarrowingInfo();
+  
+  DEBUG_WITH_TYPE("dot_graphs", printDOT(M, std::string("_intra")));
   
   t = clock() - t;
-  errs() << " Total time: " << (((float)t)/CLOCKS_PER_SEC) << "\n";
+  errs() << "Total time: " << (((float)t)/CLOCKS_PER_SEC) << "\n";
   return false;
 }
 
@@ -127,5 +142,97 @@ void OffsetBasedAliasAnalysis::gatherPointers(Module &M) {
   NumRelevantStores = relevant_stores.size();
 }
 
+/// \brief Builds the dependence graph using an intra procedural frame
+void OffsetBasedAliasAnalysis::buildIntraProceduralDepGraph() {
+  for(auto *i : all_pointers) {
+    offset_pointers[i] = new OffsetPointer(i);
+  }
+  for(auto i : offset_pointers) {
+    i.second->addIntraProceduralAddresses(this);
+    if(i.second->addr_empty())
+      if(i.second->getPointerType() == OffsetPointer::Cont
+      or i.second->getPointerType() == OffsetPointer::Phi)
+        i.second->setPointerType(OffsetPointer::Unk);
+  }
+}
+
+/// \brief Obtains narrowing information from the module
+void OffsetBasedAliasAnalysis::getNarrowingInfo() {
+  
+}
+
 /// \brief Function that prints the dependence graph in DOT format
-void OffsetBasedAliasAnalysis::printDOT(Module &M, std::string Stage) { }
+void OffsetBasedAliasAnalysis::printDOT(Module &M, std::string Stage) { 
+  std::string name = M.getModuleIdentifier();
+  name += Stage;
+  name += ".dot";
+  std::string er = "";
+  raw_fd_ostream fs(name.data(), er, (sys::fs::OpenFlags)8);
+  fs << "digraph grafico {\n";
+  //printing nodes
+  for(auto i : offset_pointers) {
+    if(i.first->getValueName() == NULL)
+      fs << "\"" << *(i.first) << "_" << i.first << "\" ";
+    else
+      fs << "\"" << (i.first->getName()) << "_" << i.first << "\" ";
+    
+    if(i.second->getPointerType() == OffsetPointer::Arg)
+      fs << "[shape=egg];\n";
+      else if(i.second->getPointerType() == OffsetPointer::Unk)
+      fs << "[shape=plaintext];\n";
+    else if(i.second->getPointerType() == OffsetPointer::Alloc)
+      fs << "[shape=square];\n";
+    else if(i.second->getPointerType() == OffsetPointer::Phi)
+      fs << "[shape=diamond];\n";
+    else if(i.second->getPointerType() == OffsetPointer::Cont)
+      fs << "[shape=ellipse];\n";
+    else if(i.second->getPointerType() == OffsetPointer::Null)
+      fs << "[shape=point];\n";
+      
+    //printing edges
+    for(std::set<Address*>::iterator j = i.second->addr_begin(),
+    je = i.second->addr_end(); j != je; j++) {      
+      if((*j)->getBase()->getPointer()->getValueName() == NULL)
+        fs << "\"" << *((*j)->getBase()->getPointer()) << "_" << 
+        (*j)->getBase()->getPointer() << "\" -> ";
+      else
+        fs << "\"" << ((*j)->getBase()->getPointer()->getName()) << "_" << 
+        (*j)->getBase()->getPointer() << "\" -> ";
+      
+      if(i.first->getValueName() == NULL)
+        fs << "\"" << *(i.first) << "_" << i.first << "\" [label=\"";
+      else
+        fs << "\"" << (i.first->getName()) << "_" << i.first << "\" [label=\"";
+      
+      if((*j)->wasWidened()) fs << "*";  
+      (*j)->getOffset().print(fs);
+      
+      for(auto z : (*j)->narrowing_ops)
+      {
+        fs<< "N{";
+        if(z.second.cmp_op == CmpInst::ICMP_EQ)
+          fs << "=";
+        else if(z.second.cmp_op == CmpInst::ICMP_NE)
+          fs << "!=";
+        else if(z.second.cmp_op == CmpInst::ICMP_SLT)
+          fs << "<";
+        else if(z.second.cmp_op == CmpInst::ICMP_SLE)
+          fs << "<=";
+        else if(z.second.cmp_op == CmpInst::ICMP_SGT)
+          fs << ">";
+        else if(z.second.cmp_op == CmpInst::ICMP_SGE)
+          fs << ">=";
+        fs << ", " << z.second.cmp_v << "+";
+        z.second.context.print(fs); 
+        fs << "]}";
+      }
+      
+      fs << "\"";
+      fs << "];\n";
+    }
+    
+  }
+  
+  
+  fs << "}";
+}
