@@ -42,7 +42,7 @@ public:
   OffsetRepresentation();
   
   /// \brief Builds \p pointer's offset using \p base 
-  OffsetRepresentation(Value* Base, Value* Pointer);
+  OffsetRepresentation(Value* Pointer, Value* Base);
   
   /// \brief Destructor 
   virtual ~OffsetRepresentation() =0;
@@ -87,8 +87,8 @@ public:
   }
   
   /// \brief Creates the offset occording to \p a = \p b + offset
-  Offset(const Value* B, const Value* A) {
-    // reps[ID] = new YourOffsetRepresentation(b, a);
+  Offset(const Value* A, const Value* B) {
+    // reps[ID] = new YourOffsetRepresentation(a, b);
   }
   
   /// \brief Add custom offset representation required analyses

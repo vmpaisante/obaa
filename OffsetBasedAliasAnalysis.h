@@ -25,8 +25,7 @@ namespace llvm
 /// Forward declarations
 class OffsetPointer;
 
-class OffsetBasedAliasAnalysis : public ModulePass, public AliasAnalysis
-{
+class OffsetBasedAliasAnalysis : public ModulePass, public AliasAnalysis {
 public:
   
   /// LLVM framework methods and atributes
@@ -54,15 +53,11 @@ public:
   
 private:
   /// \brief map that contains all the pointers represented
-  std::map<const Value*, OffsetPointer* const> offset_pointers;
+  std::map<const Value*, OffsetPointer* > offset_pointers;
   std::set<const Value*> all_pointers;
   std::set<const StoreInst*> relevant_stores;
   /// \brief Gather all pointers from the module
   void gatherPointers(Module &M);
-  /// \brief Connects the offset pointers by just looking at them
-  void simpleConnect();
-  /// \brief Gets the data used for narrowing operations from the module
-  void getNarrowingData();
   /// \brief Function that prints the dependence graph in DOT format
   void printDOT(Module &M, std::string Stage);
 };

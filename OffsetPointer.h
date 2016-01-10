@@ -36,7 +36,9 @@ class OffsetPointer {
   friend class Offset;
 
 public:
-  enum PointerTypes { Unk = 0, Alloc = 1, Phi = 2, Cont = 3, Null = 4 };
+  enum PointerTypes { 
+    Unk = 0, Alloc = 1, Phi = 2, Cont = 3, Arg = 4, Null = 5 
+  };
 
   // Contructors and destructors
   OffsetPointer(const Value* V);
@@ -59,7 +61,7 @@ public:
 
   /// \brief Function that finds the pointer's possible addresses,
   ///  this is the most important feature of this class.
-  void processInitialAddresses(OffsetBasedAliasAnalysis* Analysis);
+  void addIntraProceduralAddresses(OffsetBasedAliasAnalysis* Analysis);
 
 private:
   const Value* const pointer;

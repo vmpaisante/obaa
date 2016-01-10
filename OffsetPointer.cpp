@@ -6,6 +6,9 @@
 ///
 /// \file
 /// \brief
+/// In addIntraProceduralAddresses, neutral offset constructor are being used 
+/// for some types of pointers, this might be an issue for some possible offset
+/// representations (to be honest I have no idea)
 ///
 //===----------------------------------------------------------------------===//
 
@@ -108,68 +111,88 @@ void OffsetPointer::print() const {
   errs() << "}\n";
 }
 
-/// \brief Function that finds the pointer's possible addresses,
-void OffsetPointer::processInitialAddresses(OffsetBasedAliasAnalysis* Analysis){
+/// \brief Function that finds the pointer's possible addresses, in an intra-
+/// procedural situation. TODO: Add debug code for unks
+void OffsetPointer::addIntraProceduralAddresses(OffsetBasedAliasAnalysis* Analysis){
   // Global variables in LLVM are pointers by definition with their own alloc
   if(isa<const GlobalVariable>(*pointer)) { pointer_type = Alloc; }
-  // TODO: STOP
   else if(const Argument* p = dyn_cast<Argument>(pointer)) { 
     if(p->getName().equals("argv")) { pointer_type = Alloc; }
-    else {
-      pointer_type = Phi;
-      const Function* F = p->getParent();
-      for(auto ui = F->user_begin(), ue = F->user_end(); ui != ue; ui++) {
-        const User* u = *ui;
-        if(const CallInst* caller = dyn_cast<CallInst>(u)) {
-          int anum = caller->getNumArgOperands();
-          int ano = p->getArgNo();
-          if(ano <= anum) {
-            OffsetPointer* base = Analysis->getOffsetPointer
-              (caller->getArgOperand(ano));
-            if(base != NULL) 
-            	new Address(this, base, Offset());
-          }
-          else {
-            /// TODO: support standard values in cases where the argument
-            /// has a standard value and does not appear in function call
-            errs() << "!: ERROR (Not enough arguments):\n";
-            errs() << *p << " " << ano << "\n";
-            errs() << *u << "\n";
-            pointer_type = Unk;
-          }
-        }
-      }
-    } 
+    else { pointer_type = Arg; }
   }
   else if(isa<const AllocaInst>(*pointer)) { 
-  
+    pointer_type = Alloc;
   }
   else if(const CallInst* p = dyn_cast<CallInst>(pointer)) { 
-  
+    Function* CF = p->getCalledFunction();
+    if(CF) {
+      if(strcmp( CF->getName().data(), "malloc") == 0) { 
+        pointer_type = Alloc; 
+      }
+      else if(strcmp( CF->getName().data(), "calloc") == 0) { 
+        pointer_type = Alloc; 
+      }
+      else if(strcmp( CF->getName().data(), "realloc") == 0)
+      {
+        /// realloc is of the same name as it's first argument
+        pointer_type = Cont;
+        const Value* base_ptr_value = p->getOperand(0);
+        OffsetPointer* base_ptr = Analysis->getOffsetPointer(base_ptr_value);
+        new Address(this, base_ptr, Offset());
+      }
+      else {
+        pointer_type = Unk;
+      }
+    }
   }
   else if(const BitCastInst* p = dyn_cast<BitCastInst>(pointer)) { 
-  
+    pointer_type = Cont;
+    const Value* base_ptr_value = p->getOperand(0);
+    OffsetPointer* base_ptr = Analysis->getOffsetPointer(base_ptr_value);
+    new Address(this, base_ptr, Offset());
   }
   else if(isa<const LoadInst>(*pointer)) { 
-  
+    pointer_type = Unk;
   }
   else if(const PHINode* p = dyn_cast<PHINode>(pointer)) { 
-  
+    pointer_type = Phi;
+    unsigned int num = p->getNumIncomingValues();
+    for (unsigned int i = 0; i < num; i++)
+    {
+      const Value* base_ptr_value = p->getIncomingValue(i);
+      OffsetPointer* base_ptr = Analysis->getOffsetPointer(base_ptr_value);
+      new Address(this, base_ptr, Offset());
+    }
   }
   else if(const GetElementPtrInst* p = dyn_cast<GetElementPtrInst>(pointer)) { 
-  
+    pointer_type = Cont;
+    const Value* base_ptr_value = p->getPointerOperand();
+    OffsetPointer* base_ptr = Analysis->getOffsetPointer(base_ptr_value);
+    new Address(this, base_ptr, Offset(this->getPointer(), base_ptr_value));
   }
   else if(const GEPOperator* p = dyn_cast<GEPOperator>(pointer)) { 
-  
+    pointer_type = Cont;
+    const Value* base_ptr_value = p->getPointerOperand();
+    OffsetPointer* base_ptr = Analysis->getOffsetPointer(base_ptr_value);
+    new Address(this, base_ptr, Offset(this->getPointer(), base_ptr_value));
   }
   else if(isa<const ConstantPointerNull>(*pointer)) { 
-  
+    pointer_type = Null;
   }
   else if(const ConstantExpr* p = dyn_cast<ConstantExpr>(pointer)) { 
-  
+    const char* operation = p->getOpcodeName();
+    if(strcmp(operation, "bitcast") == 0) {
+      pointer_type = Cont;
+      const Value* base_ptr_value = p->getOperand(0);
+      OffsetPointer* base_ptr = Analysis->getOffsetPointer(base_ptr_value);
+      new Address(this, base_ptr, Offset());
+    }
+    else {
+      pointer_type = Unk;
+    }
   }
   else if(isa<const Function>(*pointer)) { 
-  
+    pointer_type = Alloc;
   }
   else { 
     pointer_type = Unk; 
