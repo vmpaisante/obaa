@@ -34,6 +34,7 @@ class OffsetPointer {
   // pointers bases and addresses are updated.
   friend class Address;
   friend class Offset;
+  friend class OffsetBasedAliasAnalysis;
 
 public:
   enum PointerTypes { 
@@ -62,6 +63,8 @@ public:
   /// \brief Function that finds the pointer's possible addresses,
   ///  this is the most important feature of this class.
   void addIntraProceduralAddresses(OffsetBasedAliasAnalysis* Analysis);
+  
+  void getPathToRoot();
 
 private:
   const Value* const pointer;
@@ -74,7 +77,7 @@ private:
   // function and structures for the local analysis
   OffsetPointer *local_root;
   std::map<OffsetPointer *, std::pair<int, Offset>> path_to_root;
-  void getPathToRoot();
+  
 };
 }
 

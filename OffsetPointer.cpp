@@ -221,6 +221,11 @@ void OffsetPointer::getPathToRoot() {
       	local_root = root;
       	break;
       }
+      index++;
+      offset = offset + addr->getOffset();
+    } else {
+      local_root = current;
+      break;
     }
   }
 }

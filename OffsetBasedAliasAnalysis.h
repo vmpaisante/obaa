@@ -18,6 +18,7 @@
 // libc's includes
 #include <map>
 #include <set>
+#include <deque>
 
 namespace llvm
 {
@@ -62,6 +63,16 @@ private:
   void buildIntraProceduralDepGraph();
   /// \brief Obtains narrowing information from the module
   void getNarrowingInfo();
+  /// \brief DFS based on color 
+  void DFS_visit_t(OffsetPointer* u, std::deque<OffsetPointer*>* dqp);
+  /// \brief DFS visit for calculating scc
+  void DFS_visit_scc(OffsetPointer* u, int scc, int &n);
+  /// \brief Finds the strongly connected components from the graph
+  std::map<int,std::pair<OffsetPointer*, int> > findSCCs();
+  /// \brief Resolves the strongly connected components from the graph
+  void resolveSCCs(std::map<int,std::pair<OffsetPointer*, int> > sccs);
+  /// \brief Resolves the whole graph
+  void resolveWholeGraph();
   /// \brief Function that prints the dependence graph in DOT format
   void printDOT(Module &M, std::string Stage);
 };

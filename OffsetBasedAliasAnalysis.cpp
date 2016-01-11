@@ -40,6 +40,7 @@
 
 STATISTIC(NumPointers, "Number of pointers from the module");
 STATISTIC(NumRelevantStores, "Number of relevant stores from the module");
+STATISTIC(NumUnkPointers, "Number of unknown pointers");
 
 using namespace llvm;
 
@@ -63,21 +64,39 @@ bool OffsetBasedAliasAnalysis::runOnModule(Module &M) {
   clock_t t;
   t = clock();
   
-  DEBUG_WITH_TYPE("phases", errs() << "Gathering module's pointers\n");
   /// The first step of the program consists on 
   /// gathering all pointers and stores
+  DEBUG_WITH_TYPE("phases", errs() << "Gathering module's pointers\n");
   gatherPointers(M);
   
-  DEBUG_WITH_TYPE("phases", errs() << "Building intra dependence graph\n");
   /// The second step of the program consists in building
   /// the intra procedural pointer dependence graph
+  DEBUG_WITH_TYPE("phases", errs() << "Building intra dependence graph\n");
   buildIntraProceduralDepGraph();
   
-  DEBUG_WITH_TYPE("phases", errs() << "Getting narrowing information\n");
   /// Getting narrowing information
+  DEBUG_WITH_TYPE("phases", errs() << "Getting narrowing information\n");
   getNarrowingInfo();
   
-  DEBUG_WITH_TYPE("dot_graphs", printDOT(M, std::string("_intra1")));
+  DEBUG_WITH_TYPE("dot_graphs", printDOT(M, std::string("_pre_intra")));
+  
+  /// Local trees capture
+  DEBUG_WITH_TYPE("phases", errs() << "Capturing local trees\n");
+  for(auto i : offset_pointers) {
+    i.second->getPathToRoot();
+  }
+  
+  /// Global analysis
+  /// Normalizing all ranged pointers so they only have non
+  /// Alloc and Unk pointers as bases
+  DEBUG_WITH_TYPE("phases", errs() << "Finding sccs\n");
+  std::map<int,std::pair<OffsetPointer*, int> > sccs = findSCCs();
+  
+  DEBUG_WITH_TYPE("phases", errs() << "Resolving sccs\n");
+  resolveSCCs(sccs);
+  
+  DEBUG_WITH_TYPE("phases", errs() << "Resolving whole graph\n");
+  resolveWholeGraph();
   
   t = clock() - t;
   errs() << "Total time: " << (((float)t)/CLOCKS_PER_SEC) << "\n";
@@ -157,6 +176,10 @@ void OffsetBasedAliasAnalysis::buildIntraProceduralDepGraph() {
       if(i.second->getPointerType() == OffsetPointer::Cont
       or i.second->getPointerType() == OffsetPointer::Phi)
         i.second->setPointerType(OffsetPointer::Unk);
+    
+    if(i.second->getPointerType() == OffsetPointer::Unk
+      or i.second->getPointerType() == OffsetPointer::Arg)  
+      NumUnkPointers++;
   }
 }
 
@@ -377,6 +400,77 @@ void OffsetBasedAliasAnalysis::getNarrowingInfo() {
       delete no;
     }
   }
+}
+
+// Depth first searches
+/// \brief transpost DFS based on color
+void OffsetBasedAliasAnalysis::DFS_visit_t(OffsetPointer* u, 
+std::deque<OffsetPointer*>* dqp) {
+  u->color = 1;
+  for(std::set<Address*>::iterator i = u->bases_begin(), e = u->bases_end();
+  i != e; i++) {
+	  OffsetPointer* nu = (*i)->getAddressee();
+    if(nu->color == 0)
+      DFS_visit_t(nu, dqp);
+  }
+  u->color = 2;
+  dqp->push_front(u);
+}
+
+/// \brief DFS visit for calculating scc
+void OffsetBasedAliasAnalysis::DFS_visit_scc(OffsetPointer* u, int scc, 
+int &n) {
+  u->color = 1;
+  for(std::set<Address*>::iterator i = u->addr_begin(), e = u->addr_end();
+  i != e; i++) {
+	  OffsetPointer* nu = (*i)->getBase();
+    if(nu->color == 0)
+      DFS_visit_scc(nu, scc, n);
+  }
+  n++;
+  u->color = 2;
+  u->scc = scc;
+}
+
+/// \brief Finds the strongly connected components from the graph
+std::map<int,std::pair<OffsetPointer*, int> > 
+OffsetBasedAliasAnalysis::findSCCs() {
+  std::deque<OffsetPointer*> dq;
+  for(auto i : offset_pointers) { 
+    i.second->color = 0;
+    i.second->scc = 0;
+  }
+  for(auto i : offset_pointers) {
+    if(i.second->color == 0) {
+      DFS_visit_t(i.second, &dq);
+    }
+  }
+  
+  int scc = 1;
+  std::map<int,std::pair<OffsetPointer*, int> > sccs;
+  for(auto i : offset_pointers) i.second->color = 0;
+  while(!dq.empty()) {
+    OffsetPointer* rp = dq.front();
+    dq.pop_front();
+    if(rp->color == 0) {
+      int n = 0;
+      DFS_visit_scc(rp, scc, n);
+      sccs[scc] = std::pair<OffsetPointer*, int>(rp, n);
+      scc++;
+    }
+  }
+  return sccs;
+}
+
+/// \brief Resolves the strongly connected components from the graph
+void OffsetBasedAliasAnalysis::resolveSCCs
+(std::map<int,std::pair<OffsetPointer*, int> > sccs) {
+  
+}
+
+/// \brief Resolves the whole graph
+void OffsetBasedAliasAnalysis::resolveWholeGraph() {
+
 }
 
 /// \brief Function that prints the dependence graph in DOT format
