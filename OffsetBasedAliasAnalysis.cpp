@@ -21,18 +21,22 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/IR/Argument.h"
+#include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/Operator.h"
 #include "llvm/IR/Value.h"
 #include "llvm/IR/Type.h"
+#include "llvm/IR/User.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 // STL includes
 #include <set>
 #include <string>
+#include <map>
 
 STATISTIC(NumPointers, "Number of pointers from the module");
 STATISTIC(NumRelevantStores, "Number of relevant stores from the module");
@@ -73,7 +77,7 @@ bool OffsetBasedAliasAnalysis::runOnModule(Module &M) {
   /// Getting narrowing information
   getNarrowingInfo();
   
-  DEBUG_WITH_TYPE("dot_graphs", printDOT(M, std::string("_intra")));
+  DEBUG_WITH_TYPE("dot_graphs", printDOT(M, std::string("_intra1")));
   
   t = clock() - t;
   errs() << "Total time: " << (((float)t)/CLOCKS_PER_SEC) << "\n";
@@ -158,7 +162,221 @@ void OffsetBasedAliasAnalysis::buildIntraProceduralDepGraph() {
 
 /// \brief Obtains narrowing information from the module
 void OffsetBasedAliasAnalysis::getNarrowingInfo() {
+  //getting narrowing information
+  std::map<const Value*, NarrowingData> narrowing_data;
+  for(auto i : offset_pointers) {
+    if(const PHINode* phi = dyn_cast<PHINode>(i.first)) {
+      if (phi->getName().startswith("SSIfy_sigma")) {
+        //find branch
+        BasicBlock* o_block = phi->getIncomingBlock(0);
+        BasicBlock::iterator bi = o_block->end();
+        bi--;
+        BranchInst* br = (BranchInst*) &(*bi);
+        Value* conditional = br->getCondition();
+        ICmpInst* cmp_i;
+        if(isa<ICmpInst>(*conditional)) cmp_i = (ICmpInst*) conditional;
+        else continue;
+        if(narrowing_data.find(br) == narrowing_data.end()) {
+          NarrowingData nd = NarrowingData(cmp_i->getPredicate(), 
+            cmp_i->getOperand(0), cmp_i->getOperand(1));
+          narrowing_data.insert(std::pair<const Value*, NarrowingData>(br, nd));
+        }
+        narrowing_data.at(br).sigmas.insert(phi);
+      }
+    }
+  }
   
+  //Associating narrowing ops
+  for(auto i : narrowing_data) {
+    const BranchInst* br = (const BranchInst*) i.first;
+    ICmpInst* cmp_i = (ICmpInst*) br->getCondition();
+    //for each sigma
+    for(std::set<const PHINode*>::iterator ii = i.second.sigmas.begin(), 
+    ee = i.second.sigmas.end(); ii != ee; ii++) {
+      const PHINode* sigma = (const PHINode*) *ii;
+      NarrowingOp* no;
+      if(i.second.cmp_op == CmpInst::ICMP_EQ) {
+        if(sigma->getParent() == br->getSuccessor(0)) { 
+          //its the true sigma
+          if(sigma->getIncomingValue(0) ==  cmp_i->getOperand(0)) { 
+            //its the left operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_EQ, 
+              offset_pointers[cmp_i->getOperand(1)]);
+          }
+          else if(sigma->getIncomingValue(0) ==  cmp_i->getOperand(1)) { 
+            //its the right operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_EQ, 
+              offset_pointers[cmp_i->getOperand(0)]);
+          }  
+        }
+        else if(sigma->getParent() == br->getSuccessor(1)) { 
+          //its the false sigma
+          if(sigma->getIncomingValue(0) == cmp_i->getOperand(0)) { 
+            //its the left operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_NE, 
+              offset_pointers[cmp_i->getOperand(1)]);
+          }
+          else if(sigma->getIncomingValue(0) ==  cmp_i->getOperand(1)) { 
+            //its the right operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_NE, 
+              offset_pointers[cmp_i->getOperand(0)]);
+          } 
+        }
+      }
+      else if(i.second.cmp_op == CmpInst::ICMP_NE) {
+      	if(sigma->getParent() == br->getSuccessor(0)) { 
+          //its the true sigma
+          if(sigma->getIncomingValue(0) ==  cmp_i->getOperand(0)) { 
+            //its the left operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_NE, 
+              offset_pointers[cmp_i->getOperand(1)]);
+          }
+          else if(sigma->getIncomingValue(0) ==  cmp_i->getOperand(1)) { 
+            //its the right operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_NE, 
+              offset_pointers[cmp_i->getOperand(0)]);
+          }  
+        }
+        else if(sigma->getParent() == br->getSuccessor(1)) { 
+          //its the false sigma
+          if(sigma->getIncomingValue(0) == cmp_i->getOperand(0)) { 
+            //its the left operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_EQ, 
+              offset_pointers[cmp_i->getOperand(0)]);
+          }
+          else if(sigma->getIncomingValue(0) ==  cmp_i->getOperand(1)) { 
+            //its the right operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_EQ, 
+              offset_pointers[cmp_i->getOperand(0)]);
+          } 
+        }
+      }
+      else if(i.second.cmp_op == CmpInst::ICMP_UGT 
+      or i.second.cmp_op == CmpInst::ICMP_SGT) {
+      	if(sigma->getParent() == br->getSuccessor(0)) { 
+      	  //its the true sigma
+          if(sigma->getIncomingValue(0) ==  cmp_i->getOperand(0)) { 
+            //its the left operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_SGT, 
+              offset_pointers[cmp_i->getOperand(1)]);
+          }
+          else if(sigma->getIncomingValue(0) ==  cmp_i->getOperand(1)) { 
+            //its the right operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_SLT, 
+              offset_pointers[cmp_i->getOperand(0)]);
+          }  
+        }
+        else if(sigma->getParent() == br->getSuccessor(1)) { 
+          //its the false sigma
+          if(sigma->getIncomingValue(0) == cmp_i->getOperand(0)) { 
+            //its the left operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_SLE, 
+              offset_pointers[cmp_i->getOperand(1)]);
+          }
+          else if(sigma->getIncomingValue(0) ==  cmp_i->getOperand(1)) { 
+            //its the right operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_SGE, 
+              offset_pointers[cmp_i->getOperand(0)]);
+          } 
+        }
+      }
+      else if(i.second.cmp_op == CmpInst::ICMP_UGE 
+      or i.second.cmp_op == CmpInst::ICMP_SGE) {
+      	if(sigma->getParent() == br->getSuccessor(0)) { 
+      	  //its the true sigma
+          if(sigma->getIncomingValue(0) ==  cmp_i->getOperand(0)) { 
+            //its the left operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_SGE, 
+              offset_pointers[cmp_i->getOperand(1)]);
+          }
+          else if(sigma->getIncomingValue(0) ==  cmp_i->getOperand(1)) { 
+            //its the right operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_SLE, 
+              offset_pointers[cmp_i->getOperand(0)]);
+          }  
+        }
+        else if(sigma->getParent() == br->getSuccessor(1)) { 
+          //its the false sigma
+          if(sigma->getIncomingValue(0) == cmp_i->getOperand(0)) { 
+            //its the left operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_SLT, 
+              offset_pointers[cmp_i->getOperand(1)]);
+          }
+          else if(sigma->getIncomingValue(0) ==  cmp_i->getOperand(1)) { 
+            //its the right operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_SGT, 
+              offset_pointers[cmp_i->getOperand(0)]);
+          } 
+        }
+      }
+      else if(i.second.cmp_op == CmpInst::ICMP_ULT 
+      or i.second.cmp_op == CmpInst::ICMP_SLT) {
+      	if(sigma->getParent() == br->getSuccessor(0)) { 
+      	  //its the true sigma
+          if(sigma->getIncomingValue(0) ==  cmp_i->getOperand(0)) { 
+            //its the left operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_SLT, 
+              offset_pointers[cmp_i->getOperand(1)]);
+          }
+          else if(sigma->getIncomingValue(0) ==  cmp_i->getOperand(1)) { 
+            //its the right operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_SGT, 
+              offset_pointers[cmp_i->getOperand(0)]);
+          }  
+        }
+        else if(sigma->getParent() == br->getSuccessor(1)) { 
+          //its the false sigma
+          if(sigma->getIncomingValue(0) == cmp_i->getOperand(0)) { 
+            //its the left operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_SGE, 
+              offset_pointers[cmp_i->getOperand(1)]);
+          }
+          else if(sigma->getIncomingValue(0) ==  cmp_i->getOperand(1)) { 
+            //its the right operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_SLE, 
+              offset_pointers[cmp_i->getOperand(0)]);
+          } 
+        }
+      }
+      else if(i.second.cmp_op == CmpInst::ICMP_ULE 
+      or i.second.cmp_op == CmpInst::ICMP_SLE) {
+      	if(sigma->getParent() == br->getSuccessor(0)) { 
+      	  //its the true sigma
+          if(sigma->getIncomingValue(0) ==  cmp_i->getOperand(0)) { 
+            //its the left operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_SLE, 
+              offset_pointers[cmp_i->getOperand(1)]);
+          }
+          else if(sigma->getIncomingValue(0) ==  cmp_i->getOperand(1)) { 
+            //its the right operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_SGE, 
+              offset_pointers[cmp_i->getOperand(0)]);
+          }  
+        }
+        else if(sigma->getParent() == br->getSuccessor(1)) { 
+          //its the false sigma
+          if(sigma->getIncomingValue(0) == cmp_i->getOperand(0)) { 
+            //its the left operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_SGT, 
+              offset_pointers[cmp_i->getOperand(1)]);
+          }
+          else if(sigma->getIncomingValue(0) ==  cmp_i->getOperand(1)) { 
+            //its the right operand of cmp
+            no = new NarrowingOp(CmpInst::ICMP_SLT, 
+              offset_pointers[cmp_i->getOperand(0)]);
+          } 
+        }
+      }
+      
+      //add narrowing op to sigma's ranged pointer
+      for(std::set<Address*>::iterator ii =offset_pointers[sigma]->addr_begin(),
+      ee = offset_pointers[sigma]->addr_end(); ii != ee; ii++) {
+        (*ii)->narrowing_ops.insert(std::pair<const Value*, const NarrowingOp>
+          (sigma, *no));
+      }
+      delete no;
+    }
+  }
 }
 
 /// \brief Function that prints the dependence graph in DOT format
