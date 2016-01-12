@@ -67,12 +67,18 @@ private:
   void DFS_visit_t(OffsetPointer* u, std::deque<OffsetPointer*>* dqp);
   /// \brief DFS visit for calculating scc
   void DFS_visit_scc(OffsetPointer* u, int scc, int &n);
+  /// \brief transpost DFS based on color and scc
+  void DFS_visit_t_scc(OffsetPointer* u, std::deque<OffsetPointer*>* dqp);
   /// \brief Finds the strongly connected components from the graph
   std::map<int,std::pair<OffsetPointer*, int> > findSCCs();
   /// \brief Resolves the strongly connected components from the graph
   void resolveSCCs(std::map<int,std::pair<OffsetPointer*, int> > sccs);
   /// \brief Resolves the whole graph
   void resolveWholeGraph();
+  /// \brief Applies the windening operators present in the graph
+  void applyWidening();
+  /// \brief Applies the narrowing operators present in the graph
+  void applyNarrowing();
   /// \brief Function that prints the dependence graph in DOT format
   void printDOT(Module &M, std::string Stage);
 };

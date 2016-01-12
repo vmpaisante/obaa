@@ -432,6 +432,20 @@ int &n) {
   u->scc = scc;
 }
 
+/// \brief transpost DFS based on color and scc
+void OffsetBasedAliasAnalysis::DFS_visit_t_scc(OffsetPointer* u, 
+std::deque<OffsetPointer*>* dqp) {
+  u->color = 1;
+  for(std::set<Address*>::iterator i = u->bases_begin(), e = u->bases_end();
+  i != e; i++) {
+	  OffsetPointer* nu = (*i)->getAddressee();
+    if(nu->color == 0 and u->scc == nu->scc)
+      DFS_visit_t_scc(nu, dqp);
+  }
+  u->color = 2;
+  dqp->push_front(u);
+}
+
 /// \brief Finds the strongly connected components from the graph
 std::map<int,std::pair<OffsetPointer*, int> > 
 OffsetBasedAliasAnalysis::findSCCs() {
@@ -465,12 +479,83 @@ OffsetBasedAliasAnalysis::findSCCs() {
 /// \brief Resolves the strongly connected components from the graph
 void OffsetBasedAliasAnalysis::resolveSCCs
 (std::map<int,std::pair<OffsetPointer*, int> > sccs) {
+  std::deque<OffsetPointer*> dq;
+  for(auto i : offset_pointers) i.second->color = 0;
   
+  for(auto i : sccs) {
+    dq.clear();
+    DFS_visit_t_scc(i.second.first, &dq);
+    
+    while(!dq.empty()) {
+      OffsetPointer* rp = dq.front();
+      dq.pop_front();
+      
+      std::deque<Address*> ad;
+      std::set<Address*> fn;
+      
+      //it expanded itself
+      std::pair<OffsetPointer*, Offset> p = 
+      std::pair<OffsetPointer*, Offset>(rp,  Offset());
+      for(auto j = rp->addr_begin(), je = rp->addr_end(); j != je; j++) {
+        ad.push_front(*j);
+        (*j)->expanded.insert(p);
+      }
+      
+      while(!ad.empty()) {
+        Address* addr = ad.front();
+        ad.pop_front();
+        
+        if(addr->getBase()->scc == rp->scc) {
+          // if its in the same scc we must expand
+          addr->Expand(ad, fn);
+        } else {
+          // if its not from the same scc there's nothing more to be done
+          fn.insert(addr);
+        }
+      }
+    }
+  }
 }
 
 /// \brief Resolves the whole graph
 void OffsetBasedAliasAnalysis::resolveWholeGraph() {
-
+  std::deque<OffsetPointer*> dq;
+  for(auto i : offset_pointers) i.second->color = 0;
+  for(auto i : offset_pointers) {
+    if(i.second->getPointerType() != OffsetPointer::Cont 
+      and i.second->color == 0) {
+      DFS_visit_t(i.second, &dq);
+    }
+  }
+  
+  while(!dq.empty()) {
+    OffsetPointer* rp = dq.front();
+    dq.pop_front();
+    
+    std::deque<Address*> ad;
+    std::set<Address*> fn;
+    
+    for(auto j = rp->addr_begin(), je = rp->addr_end(); j != je; j++)
+      ad.push_front(*j);
+      
+    while(!ad.empty()) {
+      Address* addr = ad.front();
+      ad.pop_front();
+      
+      if(addr->getBase() == addr->getAddressee()) {
+        //if the base is the very addressee, then we have a meaningless loop
+        delete addr;
+      } else if(addr->getBase()->getPointerType() == OffsetPointer::Phi 
+      or addr->getBase()->getPointerType() == OffsetPointer::Cont) {
+        //if its a phi or a continuous pointer there must be expansion
+        addr->Expand(ad, fn);
+      } else {
+        //if its not a phi or a continuous pointer there's nothing more to 
+        // be done
+        fn.insert(addr);
+      }
+    }
+  }
 }
 
 /// \brief Function that prints the dependence graph in DOT format

@@ -141,7 +141,7 @@ void OffsetPointer::addIntraProceduralAddresses(OffsetBasedAliasAnalysis* Analys
         new Address(this, base_ptr, Offset());
       }
       else {
-        pointer_type = Unk;
+        pointer_type = Call;
       }
     }
   }

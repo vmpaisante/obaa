@@ -38,7 +38,7 @@ class OffsetPointer {
 
 public:
   enum PointerTypes { 
-    Unk = 0, Alloc = 1, Phi = 2, Cont = 3, Arg = 4, Null = 5 
+    Unk = 0, Alloc = 1, Phi = 2, Cont = 3, Arg = 4, Call = 5, Null = 6 
   };
 
   // Contructors and destructors
