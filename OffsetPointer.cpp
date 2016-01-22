@@ -116,7 +116,7 @@ void OffsetPointer::print() const {
 void OffsetPointer::addIntraProceduralAddresses(OffsetBasedAliasAnalysis*
 Analysis){
   // Global variables in LLVM are pointers by definition with their own alloc
-  if(isa<const GlobalVariable>(*pointer)) { pointer_type = Alloc; }
+  if(isa<const GlobalVariable>(*pointer)) { pointer_type = Global; }
   else if(const Argument* p = dyn_cast<Argument>(pointer)) { 
     if(p->getName().equals("argv")) { pointer_type = Alloc; }
     else { pointer_type = Arg; }

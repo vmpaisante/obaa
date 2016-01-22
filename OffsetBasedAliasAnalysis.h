@@ -58,6 +58,8 @@ private:
   std::map<const Value*, OffsetPointer* > offset_pointers;
   std::set<const Value*> all_pointers;
   std::set<const StoreInst*> relevant_stores;
+  /// \brief map that stores whether a function returns a local alloc or not
+  std::map<const Function*, bool> allocFunctions;
   /// \brief Gather all pointers from the module
   void gatherPointers(Module &M);
   /// \brief Builds the dependence graph using an intra procedural frame

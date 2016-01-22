@@ -541,7 +541,16 @@ void OffsetBasedAliasAnalysis::resolveSCCs
         Address* addr = ad.front();
         ad.pop_front();
         
-        if(addr->getBase()->scc == rp->scc) {
+        if
+        (
+          (addr->getBase()->scc == rp->scc)
+          and
+          (
+            (addr->getBase()->getPointerType() == OffsetPointer::Phi) 
+            or
+            (addr->getBase()->getPointerType() == OffsetPointer::Cont)
+          )
+        ) {
           // if its in the same scc we must expand
           addr->Expand(ad, fn);
         } else {
@@ -618,20 +627,34 @@ void OffsetBasedAliasAnalysis::applyNarrowing() {
 
 /// \brief Analyzes the function F to verify if it returns a local alloc
 void OffsetBasedAliasAnalysis::analyzeFunction(const Function* F) {
-  
+  /*for (auto i = inst_begin(F), e = inst_end(F); i != e; i++)
+    if(isa<const ReturnInst>(*i)) {
+      const Value* RetPtr = ((ReturnInst*)&(*i))->getReturnValue();
+      RangedPointer* Base = analysis->getRangedPointer(RetPtr);
+      new Address(this, Base, new Range( Expr(*SI, 0),Expr(*SI, 0)) );
+    }*/
+  //STOP
 }
 
 /// \brief Updates the call insts to allocs if the called function returns
 ///  a local Alloc
 void OffsetBasedAliasAnalysis::updateCalls() {
-  /*std::map<const *Function, bool> allocFunctions;
-
   for(auto p : offset_pointers) {
-    if (p.second.pointer_type == OffsetPointer::Call) {
-      
+    if (p.second->pointer_type == OffsetPointer::Call) {
+      //get called function
+      const CallInst* c = dyn_cast<CallInst>(p.first);
+      const Function* CF = c->getCalledFunction();
+      if(CF){
+        if(allocFunctions.find(CF) == allocFunctions.end())
+          analyzeFunction(CF);
+        //if the function returns a local allocation then the pointer
+        // is an allocation since only pointers of the same function are
+        // compared
+        if(allocFunctions[CF])
+          p.second->pointer_type = OffsetPointer::Alloc;
+      }
     }
-  }*/
-//STOP
+  }
 }
 
 /// \brief Adds addresses to arguments and calls to make the dependence graph
