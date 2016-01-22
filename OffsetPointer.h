@@ -63,6 +63,7 @@ public:
   /// \brief Function that finds the pointer's possible addresses,
   ///  this is the most important feature of this class.
   void addIntraProceduralAddresses(OffsetBasedAliasAnalysis* Analysis);
+  void addInterProceduralAddresses(OffsetBasedAliasAnalysis* Analysis);
   
   void getPathToRoot();
 

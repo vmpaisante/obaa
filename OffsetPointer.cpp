@@ -113,7 +113,8 @@ void OffsetPointer::print() const {
 
 /// \brief Function that finds the pointer's possible addresses, in an intra-
 /// procedural situation. TODO: Add debug code for unks
-void OffsetPointer::addIntraProceduralAddresses(OffsetBasedAliasAnalysis* Analysis){
+void OffsetPointer::addIntraProceduralAddresses(OffsetBasedAliasAnalysis*
+Analysis){
   // Global variables in LLVM are pointers by definition with their own alloc
   if(isa<const GlobalVariable>(*pointer)) { pointer_type = Alloc; }
   else if(const Argument* p = dyn_cast<Argument>(pointer)) { 
@@ -196,6 +197,15 @@ void OffsetPointer::addIntraProceduralAddresses(OffsetBasedAliasAnalysis* Analys
   }
   else { 
     pointer_type = Unk; 
+  }
+}
+
+void OffsetPointer::addInterProceduralAddresses(OffsetBasedAliasAnalysis*
+Analysis){ //STOP
+  if(pointer_type == Arg) {
+
+  } else if(pointer_type == Call) {
+
   }
 }
 

@@ -31,6 +31,7 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/User.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 // STL includes
@@ -43,6 +44,11 @@ STATISTIC(NumRelevantStores, "Number of relevant stores from the module");
 STATISTIC(NumUnkPointers, "Number of unknown pointers");
 
 using namespace llvm;
+
+/// Commmand line options
+static cl::opt<bool> Interprocedural("inter",
+  cl::desc("Indicates obaa to run an interprocedural analysis"),
+  cl::init(false));
 
 /// LLVM framework methods and atributes
 char OffsetBasedAliasAnalysis::ID = 0;
@@ -60,7 +66,7 @@ void OffsetBasedAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 
 bool OffsetBasedAliasAnalysis::runOnModule(Module &M) {
   //Settin up
-  InitializeAliasAnalysis(this);
+  InitializeAliasAnalysis(this, &M.getDataLayout());
   clock_t t;
   t = clock();
   
@@ -78,7 +84,7 @@ bool OffsetBasedAliasAnalysis::runOnModule(Module &M) {
   DEBUG_WITH_TYPE("phases", errs() << "Getting narrowing information\n");
   getNarrowingInfo();
   
-  DEBUG_WITH_TYPE("dot_graphs", printDOT(M, std::string("_pre_intra")));
+  DEBUG_WITH_TYPE("dot_graphs", printDOT(M, std::string("_pre_analysis")));
   
   /// Local trees capture
   DEBUG_WITH_TYPE("phases", errs() << "Capturing local trees\n");
@@ -86,7 +92,7 @@ bool OffsetBasedAliasAnalysis::runOnModule(Module &M) {
     i.second->getPathToRoot();
   }
   
-  /// Global analysis
+  /// Intraprocedural analysis
   /// Normalizing all ranged pointers so they only have non
   /// Alloc and Unk pointers as bases
   DEBUG_WITH_TYPE("phases", errs() << "Finding sccs\n");
@@ -97,19 +103,49 @@ bool OffsetBasedAliasAnalysis::runOnModule(Module &M) {
   
   DEBUG_WITH_TYPE("phases", errs() << "Resolving whole graph\n");
   resolveWholeGraph();
+
+  /// Constext sensitive part that updates the call insts
+  DEBUG_WITH_TYPE("phases", errs() << "Updating calls to allocs\n");
+  updateCalls();
+
+  DEBUG_WITH_TYPE("dot_graphs", printDOT(M, std::string("_post_intra")));
+
+  /// Interprocedural analysis
+  if(Interprocedural) {
+    DEBUG_WITH_TYPE("phases", errs() << "Adding interprocedural edges\n");
+    addInterProceduralEdges();
+
+    DEBUG_WITH_TYPE("phases", errs() << "Finding sccs\n");
+    std::map<int,std::pair<OffsetPointer*, int> > sccs = findSCCs();
+    
+    DEBUG_WITH_TYPE("phases", errs() << "Resolving sccs\n");
+    resolveSCCs(sccs);
+    
+    DEBUG_WITH_TYPE("phases", errs() << "Resolving whole graph\n");
+    resolveWholeGraph();
+
+    DEBUG_WITH_TYPE("dot_graphs", printDOT(M, std::string("_post_inter")));
+  }
+
+  /// Applying narrowing and widening operators
+  applyWidening();
+  applyNarrowing();
+
+  DEBUG_WITH_TYPE("dot_graphs", printDOT(M, std::string("_finished")));
   
   t = clock() - t;
-  errs() << "Total time: " << (((float)t)/CLOCKS_PER_SEC) << "\n";
+  DEBUG_WITH_TYPE("phases",
+    errs() << "Total time: " << (((float)t)/CLOCKS_PER_SEC) << "\n");
   return false;
 }
 
 /// Alias Analysis framework methods
-AliasAnalysis::AliasResult OffsetBasedAliasAnalysis::alias(const Location &LocA, 
-const Location &LocB) {
+AliasResult OffsetBasedAliasAnalysis::alias(const MemoryLocation &LocA, 
+const MemoryLocation &LocB) {
   return AliasAnalysis::alias(LocA, LocB);
 }
 
-bool OffsetBasedAliasAnalysis::pointsToConstantMemory(const Location &Loc, 
+bool OffsetBasedAliasAnalysis::pointsToConstantMemory(const MemoryLocation &Loc, 
 bool OrLocal) {
   return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
 }
@@ -558,12 +594,58 @@ void OffsetBasedAliasAnalysis::resolveWholeGraph() {
   }
 }
 
+/// \brief Applies the windening operators present in the graph
+void OffsetBasedAliasAnalysis::applyWidening() {
+  for(auto p : offset_pointers) {
+    for(auto a : p.second->addresses) {
+      for(auto wo : a->widening_ops) {
+        a->offset.widen(wo.second);
+      }
+    }
+  }
+}
+
+/// \brief Applies the narrowing operators present in the graph
+void OffsetBasedAliasAnalysis::applyNarrowing() {
+  for(auto p : offset_pointers) {
+    for(auto a : p.second->addresses) {
+      for(auto no : a->narrowing_ops) {
+        a->offset.narrow(no.second, a->base);
+      }
+    }
+  }
+}
+
+/// \brief Analyzes the function F to verify if it returns a local alloc
+void OffsetBasedAliasAnalysis::analyzeFunction(const Function* F) {
+  
+}
+
+/// \brief Updates the call insts to allocs if the called function returns
+///  a local Alloc
+void OffsetBasedAliasAnalysis::updateCalls() {
+  /*std::map<const *Function, bool> allocFunctions;
+
+  for(auto p : offset_pointers) {
+    if (p.second.pointer_type == OffsetPointer::Call) {
+      
+    }
+  }*/
+//STOP
+}
+
+/// \brief Adds addresses to arguments and calls to make the dependence graph
+///  interprocedural
+void OffsetBasedAliasAnalysis::addInterProceduralEdges() {
+
+}
+
 /// \brief Function that prints the dependence graph in DOT format
 void OffsetBasedAliasAnalysis::printDOT(Module &M, std::string Stage) { 
   std::string name = M.getModuleIdentifier();
   name += Stage;
   name += ".dot";
-  std::string er = "";
+  std::error_code er;
   raw_fd_ostream fs(name.data(), er, (sys::fs::OpenFlags)8);
   fs << "digraph grafico {\n";
   //printing nodes

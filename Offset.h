@@ -29,8 +29,8 @@ namespace llvm {
 
 // Forward declarations
 class AnalysisUsage;
-class NarrowingOp;
-class WideningOp;
+struct NarrowingOp;
+struct WideningOp;
 class Value;
 class OffsetPointer;
 

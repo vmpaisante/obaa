@@ -60,7 +60,7 @@ private:
   // Basic contents of an address
   OffsetPointer* const base;
   OffsetPointer* const addressee;
-  const Offset offset;
+  Offset offset;
   // Structures that hold the narrowing and widening operators
   std::map<const Value *, const NarrowingOp> narrowing_ops;
   std::map<const Value *, const WideningOp> widening_ops;

@@ -36,13 +36,14 @@ public:
   bool runOnModule(Module &M) override;
   
   /// Alias Analysis framework methods
-  AliasResult alias(const Location &LocA, const Location &LocB) override;
-  bool pointsToConstantMemory(const Location &Loc, bool OrLocal) override;
+  AliasResult alias(const MemoryLocation &LocA,
+    const MemoryLocation &LocB) override;
+  bool pointsToConstantMemory(const MemoryLocation &Loc, bool OrLocal) override;
   /// getAdjustedAnalysisPointer - This method is used when a pass implements
   /// an analysis interface through multiple inheritance.  If needed, it
   /// should override this to adjust the this pointer as needed for the
   /// specified pass info.
-  virtual void *getAdjustedAnalysisPointer(AnalysisID PI) {
+  virtual void *getAdjustedAnalysisPointer(AnalysisID PI) override {
     if (PI == &AliasAnalysis::ID)
       return (AliasAnalysis*)this;
     return this;
@@ -79,6 +80,14 @@ private:
   void applyWidening();
   /// \brief Applies the narrowing operators present in the graph
   void applyNarrowing();
+  /// \brief Analyzes the function F to verify if it returns a local alloc
+  void analyzeFunction(const Function* F);
+  /// \brief Updates the call insts to allocs if the called function returns
+  ///  a local Alloc
+  void updateCalls();
+  /// \brief Adds addresses to arguments and calls to make the dependence graph
+  ///  interprocedural
+  void addInterProceduralEdges();
   /// \brief Function that prints the dependence graph in DOT format
   void printDOT(Module &M, std::string Stage);
 };
