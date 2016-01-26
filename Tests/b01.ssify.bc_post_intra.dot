@@ -1,7 +1,0 @@
-digraph grafico {
-"a_0x36de8a0" [shape=egg];
-"arrayidx_0x36e1750" [shape=ellipse];
-"a_0x36de8a0" -> "arrayidx_0x36e1750" [label="()"];
-"arrayidx3_0x36e1950" [shape=ellipse];
-"a_0x36de8a0" -> "arrayidx3_0x36e1950" [label="()"];
-}

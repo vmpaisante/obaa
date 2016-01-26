@@ -38,6 +38,7 @@
 #include <set>
 #include <string>
 #include <map>
+#include <cassert>
 
 STATISTIC(NumPointers, "Number of pointers from the module");
 STATISTIC(NumRelevantStores, "Number of relevant stores from the module");
@@ -214,7 +215,8 @@ void OffsetBasedAliasAnalysis::buildIntraProceduralDepGraph() {
         i.second->setPointerType(OffsetPointer::Unk);
     
     if(i.second->getPointerType() == OffsetPointer::Unk
-      or i.second->getPointerType() == OffsetPointer::Arg)  
+    or i.second->getPointerType() == OffsetPointer::Arg
+    or i.second->getPointerType() == OffsetPointer::Call)  
       NumUnkPointers++;
   }
 }
@@ -627,13 +629,32 @@ void OffsetBasedAliasAnalysis::applyNarrowing() {
 
 /// \brief Analyzes the function F to verify if it returns a local alloc
 void OffsetBasedAliasAnalysis::analyzeFunction(const Function* F) {
-  /*for (auto i = inst_begin(F), e = inst_end(F); i != e; i++)
+  // if all returned pointers are local allocation this function
+  // gets a true entry
+
+  //This for loop tries prove the contrary and give the function a false entry
+  for (auto i = inst_begin(F), e = inst_end(F); i != e; i++)
     if(isa<const ReturnInst>(*i)) {
-      const Value* RetPtr = ((ReturnInst*)&(*i))->getReturnValue();
-      RangedPointer* Base = analysis->getRangedPointer(RetPtr);
-      new Address(this, Base, new Range( Expr(*SI, 0),Expr(*SI, 0)) );
-    }*/
-  //STOP
+      //getting the returned pointer
+      const Value* ret_ptr = ((ReturnInst*)&(*i))->getReturnValue();
+      OffsetPointer* ret_optr = getOffsetPointer(ret_ptr);
+
+      //if the returned value is not a pointer, there is something wrong
+      assert(ret_optr != NULL);
+
+      //if the pointer is not a local allocation or one of it's addresses
+      // bases aren't local allocations then the function gets a false entry 
+      if(ret_optr->pointer_type != OffsetPointer::Alloc)
+        for(auto a : ret_optr->addresses)
+          if(a->base->pointer_type != OffsetPointer::Alloc) {
+            //the function does not return local allocation
+            allocFunctions[F] = false;
+            return;
+          }
+    }
+
+  //Else, the function gets a true entry
+  allocFunctions[F] = true;
 }
 
 /// \brief Updates the call insts to allocs if the called function returns
@@ -650,8 +671,10 @@ void OffsetBasedAliasAnalysis::updateCalls() {
         //if the function returns a local allocation then the pointer
         // is an allocation since only pointers of the same function are
         // compared
-        if(allocFunctions[CF])
+        if(allocFunctions[CF]){
           p.second->pointer_type = OffsetPointer::Alloc;
+          NumUnkPointers--;
+        }
       }
     }
   }
@@ -660,7 +683,22 @@ void OffsetBasedAliasAnalysis::updateCalls() {
 /// \brief Adds addresses to arguments and calls to make the dependence graph
 ///  interprocedural
 void OffsetBasedAliasAnalysis::addInterProceduralEdges() {
+  for(auto p : offset_pointers) {
+    if (p.second->pointer_type == OffsetPointer::Call
+    or p.second->pointer_type == OffsetPointer::Arg) {
+      p.second->addInterProceduralAddresses(this);
 
+      //If addresses were added the pointer is no longer unknown,
+      // if no addresses were added then the pointer is really unknown
+      if(p.second->addresses.empty()) {
+        p.second->pointer_type = OffsetPointer::Unk;
+      }
+      else {
+        p.second->pointer_type = OffsetPointer::Phi;
+        NumUnkPointers--;
+      }
+    }
+  }
 }
 
 /// \brief Function that prints the dependence graph in DOT format

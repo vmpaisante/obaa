@@ -25,8 +25,10 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/GlobalVariable.h"
+#include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/Debug.h"
 // STL includes
 #include <cassert>
 
@@ -201,11 +203,50 @@ Analysis){
 }
 
 void OffsetPointer::addInterProceduralAddresses(OffsetBasedAliasAnalysis*
-Analysis){ //STOP
-  if(pointer_type == Arg) {
+Analysis){
+  if(const Argument* p = dyn_cast<Argument>(pointer)) {
+    const Function* F = p->getParent();
+    //Go through all the uses of the argument's function, the calls are
+    // the addresses bases
+    for(auto ui = F->user_begin(), ue = F->user_end(); ui != ue; ui++) {
+      const User* u = *ui;
+      if(const CallInst* caller = dyn_cast<CallInst>(u)) {
+        int anum = caller->getNumArgOperands();
+        int ano = p->getArgNo();
+        if(ano <= anum) {
+          // create address
+          OffsetPointer* base = Analysis->getOffsetPointer
+            (caller->getArgOperand(ano));
+          if(base != NULL) 
+            new Address(this, base, Offset());
+        } else {
+          /// TODO: support standard values in cases where the argument
+          /// has a standard value and does not appear in function call
+          DEBUG_WITH_TYPE("errors",
+            errs() << "!: ERROR (Not enough arguments):\n");
+          DEBUG_WITH_TYPE("errors", errs() << *p << " " << ano << "\n");
+          DEBUG_WITH_TYPE("errors", errs() << *u << "\n");
+          pointer_type = Unk;
+          addresses.clear();
+          return;
+        }
+      }
+    }
+  } else if (const CallInst* p = dyn_cast<CallInst>(pointer)){
+    Function* CF = p->getCalledFunction();
+    if(CF) {
+      for (auto i = inst_begin(CF), e = inst_end(CF); i != e; i++)
+        if(isa<const ReturnInst>(*i)) {
+            /// create address
+            const Value* ret_ptr = ((ReturnInst*)&(*i))->getReturnValue();
+            OffsetPointer* base = Analysis->getOffsetPointer(ret_ptr);
 
-  } else if(pointer_type == Call) {
+            //if the returned value is not a pointer, there is something wrong
+            assert(base != NULL);
 
+            new Address(this, base, Offset());
+        }
+    }
   }
 }
 
