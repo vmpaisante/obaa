@@ -70,6 +70,7 @@ bool OffsetBasedAliasAnalysis::runOnModule(Module &M) {
   InitializeAliasAnalysis(this, &M.getDataLayout());
   clock_t t;
   t = clock();
+  dotNum = 0;
   
   /// The first step of the program consists on 
   /// gathering all pointers and stores
@@ -703,7 +704,8 @@ void OffsetBasedAliasAnalysis::addInterProceduralEdges() {
 
 /// \brief Function that prints the dependence graph in DOT format
 void OffsetBasedAliasAnalysis::printDOT(Module &M, std::string Stage) { 
-  std::string name = M.getModuleIdentifier();
+  std::string name = std::to_string(dotNum) + "_";
+  name += M.getModuleIdentifier();
   name += Stage;
   name += ".dot";
   std::error_code er;
@@ -718,7 +720,11 @@ void OffsetBasedAliasAnalysis::printDOT(Module &M, std::string Stage) {
     
     if(i.second->getPointerType() == OffsetPointer::Arg)
       fs << "[shape=egg];\n";
-      else if(i.second->getPointerType() == OffsetPointer::Unk)
+    else if(i.second->getPointerType() == OffsetPointer::Call)
+      fs << "[shape=egg];\n";
+    else if(i.second->getPointerType() == OffsetPointer::Global)
+      fs << "[shape=octagon];\n";
+    else if(i.second->getPointerType() == OffsetPointer::Unk)
       fs << "[shape=plaintext];\n";
     else if(i.second->getPointerType() == OffsetPointer::Alloc)
       fs << "[shape=square];\n";
@@ -773,6 +779,6 @@ void OffsetBasedAliasAnalysis::printDOT(Module &M, std::string Stage) {
     
   }
   
-  
   fs << "}";
+  dotNum++;
 }

@@ -60,6 +60,8 @@ private:
   std::set<const StoreInst*> relevant_stores;
   /// \brief map that stores whether a function returns a local alloc or not
   std::map<const Function*, bool> allocFunctions;
+  /// \brief Counts how many dot graphs were printed
+  unsigned int dotNum;
   /// \brief Gather all pointers from the module
   void gatherPointers(Module &M);
   /// \brief Builds the dependence graph using an intra procedural frame
