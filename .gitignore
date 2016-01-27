@@ -3,6 +3,7 @@
 *.lo
 *.o
 *.obj
+*.bc
 
 # Precompiled Headers
 *.gch
@@ -26,6 +27,12 @@
 *.exe
 *.out
 *.app
+
+# Dot files
+*.dot
+
+# llvm-dis files
+*.ll
 
 # Compilation
 Release+Asserts/
