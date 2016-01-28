@@ -117,6 +117,8 @@ bool OffsetBasedAliasAnalysis::runOnModule(Module &M) {
     DEBUG_WITH_TYPE("phases", errs() << "Adding interprocedural edges\n");
     addInterProceduralEdges();
 
+    DEBUG_WITH_TYPE("dot_graphs", printDOT(M, std::string("_pre_inter")));
+    
     DEBUG_WITH_TYPE("phases", errs() << "Finding sccs\n");
     std::map<int,std::pair<OffsetPointer*, int> > sccs = findSCCs();
     
@@ -145,7 +147,7 @@ bool OffsetBasedAliasAnalysis::runOnModule(Module &M) {
         i.second->setPointerType(OffsetPointer::Unk);
     }
 
-	DEBUG_WITH_TYPE("phases", errs() << "Control flow reached the end.\n");
+  DEBUG_WITH_TYPE("phases", errs() << "Control flow reached the end.\n");
 
   DEBUG_WITH_TYPE("dot_graphs", printDOT(M, std::string("_finished")));
   
@@ -333,7 +335,7 @@ void OffsetBasedAliasAnalysis::getNarrowingInfo() {
   std::map<const Value*, NarrowingData> narrowing_data;
   for(auto i : offset_pointers) {
     if(const PHINode* phi = dyn_cast<PHINode>(i.first)) {
-      if (phi->getName().startswith("SSIfy_sigma")) {
+      if (phi->getName().startswith("vSSA_sigma")) {
         //find branch
         BasicBlock* o_block = phi->getIncomingBlock(0);
         BasicBlock::iterator bi = o_block->end();
@@ -391,7 +393,7 @@ void OffsetBasedAliasAnalysis::getNarrowingInfo() {
         }
       }
       else if(i.second.cmp_op == CmpInst::ICMP_NE) {
-      	if(sigma->getParent() == br->getSuccessor(0)) { 
+        if(sigma->getParent() == br->getSuccessor(0)) { 
           //its the true sigma
           if(sigma->getIncomingValue(0) ==  cmp_i->getOperand(0)) { 
             //its the left operand of cmp
@@ -420,8 +422,8 @@ void OffsetBasedAliasAnalysis::getNarrowingInfo() {
       }
       else if(i.second.cmp_op == CmpInst::ICMP_UGT 
       or i.second.cmp_op == CmpInst::ICMP_SGT) {
-      	if(sigma->getParent() == br->getSuccessor(0)) { 
-      	  //its the true sigma
+        if(sigma->getParent() == br->getSuccessor(0)) { 
+        //its the true sigma
           if(sigma->getIncomingValue(0) ==  cmp_i->getOperand(0)) { 
             //its the left operand of cmp
             no = new NarrowingOp(CmpInst::ICMP_SGT, 
@@ -507,8 +509,8 @@ void OffsetBasedAliasAnalysis::getNarrowingInfo() {
       }
       else if(i.second.cmp_op == CmpInst::ICMP_ULE 
       or i.second.cmp_op == CmpInst::ICMP_SLE) {
-      	if(sigma->getParent() == br->getSuccessor(0)) { 
-      	  //its the true sigma
+        if(sigma->getParent() == br->getSuccessor(0)) { 
+          //its the true sigma
           if(sigma->getIncomingValue(0) ==  cmp_i->getOperand(0)) { 
             //its the left operand of cmp
             no = new NarrowingOp(CmpInst::ICMP_SLE, 
@@ -534,7 +536,8 @@ void OffsetBasedAliasAnalysis::getNarrowingInfo() {
           } 
         }
       }
-      
+      errs() << "x\n";
+  
       //add narrowing op to sigma's ranged pointer
       for(std::set<Address*>::iterator ii =offset_pointers[sigma]->addr_begin(),
       ee = offset_pointers[sigma]->addr_end(); ii != ee; ii++) {
@@ -717,6 +720,7 @@ void OffsetBasedAliasAnalysis::applyWidening() {
     for(auto a : p.second->addresses) {
       for(auto wo : a->widening_ops) {
         a->offset.widen(wo.second);
+        a->widened = true;
       }
     }
   }
@@ -809,8 +813,8 @@ void OffsetBasedAliasAnalysis::addInterProceduralEdges() {
 
 /// \brief Function that prints the dependence graph in DOT format
 void OffsetBasedAliasAnalysis::printDOT(Module &M, std::string Stage) { 
-  std::string name = std::to_string(dotNum) + "_";
-  name += M.getModuleIdentifier();
+  std::string name = M.getModuleIdentifier();
+  name +=  "_" + std::to_string(dotNum) + "_";
   name += Stage;
   name += ".dot";
   std::error_code er;

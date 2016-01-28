@@ -124,6 +124,12 @@ void Address::Expand(std::deque<Address *>& Ad, std::set<Address *>& Fn) {
           new_address->narrowing_ops.insert(new_entry);
         }
       }
+
+      new_address->widening_ops = widening_ops;
+      for(auto j : i->widening_ops) {
+        new_address->widening_ops.insert(j);
+      }
+      
       Ad.push_front(new_address);
     }
   } else {
