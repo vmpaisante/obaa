@@ -133,6 +133,20 @@ bool OffsetBasedAliasAnalysis::runOnModule(Module &M) {
   applyWidening();
   applyNarrowing();
 
+  DEBUG_WITH_TYPE("phases", errs() << "Adding self to base pointers\n");
+  /// Adding self to base pointers
+  for(auto i : offset_pointers)
+    if(i.second->addr_empty()) {
+      new Address(i.second, i.second, Offset());
+      if( i.second->pointer_type != OffsetPointer::Null
+      and i.second->pointer_type != OffsetPointer::Unk
+      and i.second->pointer_type != OffsetPointer::Global
+      and i.second->pointer_type != OffsetPointer::Alloc )
+        i.second->setPointerType(OffsetPointer::Unk);
+    }
+
+	DEBUG_WITH_TYPE("phases", errs() << "Control flow reached the end.\n");
+
   DEBUG_WITH_TYPE("dot_graphs", printDOT(M, std::string("_finished")));
   
   t = clock() - t;
@@ -144,7 +158,98 @@ bool OffsetBasedAliasAnalysis::runOnModule(Module &M) {
 /// Alias Analysis framework methods
 AliasResult OffsetBasedAliasAnalysis::alias(const MemoryLocation &LocA, 
 const MemoryLocation &LocB) {
-  return AliasAnalysis::alias(LocA, LocB);
+  OffsetPointer* op1 = getOffsetPointer(LocA.Ptr);
+  OffsetPointer* op2 = getOffsetPointer(LocB.Ptr);
+
+  // If one of these pointers is not in the graph pass it to the next analysis
+  // int the chain
+  if (op1 == NULL or op2 == NULL)
+    return AliasAnalysis::alias(LocA, LocB);
+
+  // Local tree verification
+
+  if(op1->local_root == op2->local_root) {
+    int index = -1;
+    OffsetPointer* ancestor = NULL;
+    for(auto i : op1->path_to_root) {
+      if(index > -1 and i.second.first > index) {
+        continue;
+      }
+      else if(op2->path_to_root.count(i.first)) {  
+        if(index == -1 or i.second.first < index) {
+         index = i.second.first;
+         ancestor = i.first;
+        }
+      } 
+    }
+
+    if(op1->path_to_root[ancestor].second
+    != op1->path_to_root[ancestor].second) {
+      return NoAlias;
+    }
+  }
+  
+  // Dependence graph verification
+
+  for(auto *i : op1->addresses) {
+    for(auto *j : op2->addresses) {
+      bool disjoint = false;
+
+      //first case is a local eval, one of the pointers comes from an 
+      // argument or is an argument, the other is not unknown or global related
+      if (isa<const Argument>(op1->pointer)) {
+        if( !(isa<const Argument>(op2->pointer))
+        and op2->getPointerType() != OffsetPointer::Global
+        and !(j->argument)
+        and j->getBase()->getPointerType() != OffsetPointer::Unk
+        and !(j->global) ) {
+          disjoint = true;
+        }
+      }
+      else if (isa<const Argument>(op2->pointer)) {
+        if( op1->getPointerType() != OffsetPointer::Global
+        and !(i->argument)
+        and i->getBase()->getPointerType() != OffsetPointer::Unk
+        and !(i->global) ) {
+          disjoint = true;
+        }
+      }
+      else if (i->argument) {
+        if( op2->getPointerType() != OffsetPointer::Global
+        and !(j->argument)
+        and j->getBase()->getPointerType() != OffsetPointer::Unk
+        and !(j->global) ) {
+          disjoint = true;
+        }
+      }
+      else if (j->argument) {
+        if( op1->getPointerType() != OffsetPointer::Global
+        and i->getBase()->getPointerType() != OffsetPointer::Unk
+        and !(i->global) ) {
+          disjoint = true;
+        }
+      }
+
+      //Second case, if bases are different
+      if(i->getBase() != j->getBase()) {
+        if( i->getBase()->getPointerType() != OffsetPointer::Unk
+        and j->getBase()->getPointerType() != OffsetPointer::Unk) {
+          disjoint = true;
+        }
+      }
+      else {
+        //Third case, bases are equal
+        if(i->getOffset() != j->getOffset()) {
+          disjoint = true;
+        }
+      }
+
+      if(!disjoint)
+        return AliasAnalysis::alias(LocA, LocB);
+    }
+  }
+  
+  return NoAlias;
 }
 
 bool OffsetBasedAliasAnalysis::pointsToConstantMemory(const MemoryLocation &Loc, 
