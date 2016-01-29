@@ -16,6 +16,28 @@
 
 using namespace llvm;
 
+//Functions someone should alter to add a new offset representation
+//===--------------------------------------------------------------------===//
+  
+/// \brief Add custom offset representation to reps for use in obaa.
+/// This constructor should return a neutral offset element
+Offset::Offset() {
+  // reps[ID] = new YourOffsetRepresentation();
+}
+  
+/// \brief Creates the offset occording to \p a = \p b + offset
+Offset::Offset(const Value* A, const Value* B) {
+  // reps[ID] = new YourOffsetRepresentation(a, b);
+}
+  
+/// \brief Add custom offset representation required analyses
+void Offset::getAnalysisUsage(AnalysisUsage &AU) {
+  // AU.addRequired<RequiredAnalysis>();
+}
+  
+//Functions that should be left alone on creating new offset representation
+//===--------------------------------------------------------------------===//
+
 /// \brief Copy contructor 
 Offset::Offset(const Offset& Other) {
   for (auto i : Other.reps) {

@@ -79,27 +79,15 @@ public:
 class Offset{
 
 public:
-  //Functions someone should alter to add a new offset representation
-  //===--------------------------------------------------------------------===//
-  
   /// \brief Add custom offset representation to reps for use in obaa.
   /// This constructor should return a neutral offset element
-  Offset() {
-    // reps[ID] = new YourOffsetRepresentation();
-  }
+  Offset();
   
   /// \brief Creates the offset occording to \p a = \p b + offset
-  Offset(const Value* A, const Value* B) {
-    // reps[ID] = new YourOffsetRepresentation(a, b);
-  }
+  Offset(const Value* A, const Value* B);
   
   /// \brief Add custom offset representation required analyses
-  static void getAnalysisUsage(AnalysisUsage &AU) {
-    // AU.addRequired<RequiredAnalysis>();
-  }
-  
-  //Functions that should be left alone on creating new offset representation
-  //===--------------------------------------------------------------------===//
+  static void getAnalysisUsage(AnalysisUsage &AU);
   
   /// \brief Copy contructor 
   Offset(const Offset& Other);
