@@ -91,7 +91,7 @@ private:
   void updateCalls();
   /// \brief Adds addresses to arguments and calls to make the dependence graph
   ///  interprocedural
-  void addInterProceduralEdges();
+  void addInterProceduralEdges(); 
   /// \brief Function that prints the dependence graph in DOT format
   void printDOT(Module &M, std::string Stage);
 };

@@ -33,6 +33,7 @@ struct NarrowingOp;
 struct WideningOp;
 class Value;
 class OffsetPointer;
+class OffsetBasedAliasAnalysis;
 
 /// \brief Abstract class for implementing offset representations.
 /// Use it for testing new integer comparison analyses.
@@ -42,7 +43,7 @@ public:
   OffsetRepresentation();
   
   /// \brief Builds \p pointer's offset using \p base 
-  OffsetRepresentation(Value* Pointer, Value* Base);
+  OffsetRepresentation(const Value* Pointer, const Value* Base);
   
   /// \brief Destructor 
   virtual ~OffsetRepresentation() =0;
@@ -66,9 +67,9 @@ public:
     OffsetRepresentation* After) =0;
   
   /// \brief Prints the offset representation
-  void print() { }
+  virtual void print() { }
   /// \brief Prints the offset to a file
-  void print(raw_fd_ostream& fs) { }
+  virtual void print(raw_fd_ostream& fs) { }
   
 };
 
@@ -79,6 +80,10 @@ public:
 class Offset{
 
 public:
+
+  /// \brief Add custom offset representation initialization
+  static void initialization(OffsetBasedAliasAnalysis* Analysis);
+
   /// \brief Add custom offset representation to reps for use in obaa.
   /// This constructor should return a neutral offset element
   Offset();

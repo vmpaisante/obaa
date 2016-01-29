@@ -67,10 +67,11 @@ void OffsetBasedAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 
 bool OffsetBasedAliasAnalysis::runOnModule(Module &M) {
   //Settin up
-  InitializeAliasAnalysis(this, &M.getDataLayout());
   clock_t t;
   t = clock();
   dotNum = 0;
+  InitializeAliasAnalysis(this, &M.getDataLayout());
+  Offset::initialization(this);
   
   /// The first step of the program consists on 
   /// gathering all pointers and stores

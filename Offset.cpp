@@ -13,26 +13,37 @@
 #include "Narrowing.h"
 #include "OffsetPointer.h"
 #include "Address.h"
+#include "RAOffset.h"
 
 using namespace llvm;
 
 //Functions someone should alter to add a new offset representation
 //===--------------------------------------------------------------------===//
+/// \brief Add custom offset representation initialization
+void initialization(OffsetBasedAliasAnalysis* Analysis) {
+  
+}
   
 /// \brief Add custom offset representation to reps for use in obaa.
 /// This constructor should return a neutral offset element
 Offset::Offset() {
   // reps[ID] = new YourOffsetRepresentation();
+
+  reps[0] = new RAOffset();
 }
   
 /// \brief Creates the offset occording to \p a = \p b + offset
 Offset::Offset(const Value* A, const Value* B) {
-  // reps[ID] = new YourOffsetRepresentation(a, b);
+  // reps[ID] = new YourOffsetRepresentation(A, B);
+
+  reps[0] = new RAOffset(A, B);
 }
   
 /// \brief Add custom offset representation required analyses
 void Offset::getAnalysisUsage(AnalysisUsage &AU) {
   // AU.addRequired<RequiredAnalysis>();
+
+  AU.addRequired<IntraProceduralRA<Cousot> >();
 }
   
 //Functions that should be left alone on creating new offset representation
