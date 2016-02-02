@@ -40,13 +40,13 @@ class OffsetBasedAliasAnalysis;
 class OffsetRepresentation {
   
 public:
-  OffsetRepresentation();
+  OffsetRepresentation() { };
   
   /// \brief Builds \p pointer's offset using \p base 
-  OffsetRepresentation(const Value* Pointer, const Value* Base);
+  OffsetRepresentation(const Value* Pointer, const Value* Base) { };
   
   /// \brief Destructor 
-  virtual ~OffsetRepresentation() =0;
+  virtual ~OffsetRepresentation() { };
   
   /// \brief Returns a copy of the represented offset
   virtual OffsetRepresentation* copy() =0;

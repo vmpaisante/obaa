@@ -17,6 +17,7 @@
 #include "Narrowing.h"
 #include "Offset.h"
 #include "OffsetPointer.h"
+#include "RangeAnalysis.h"
 // llvm includes
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -60,9 +61,11 @@ static RegisterPass<OffsetBasedAliasAnalysis> X("obaa",
 static RegisterAnalysisGroup<AliasAnalysis> E(X);
 
 void OffsetBasedAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
-  AliasAnalysis::getAnalysisUsage(AU);
-  Offset::getAnalysisUsage(AU);
   AU.setPreservesAll();
+  AU.addRequired<IntraProceduralRA<Cousot> >();
+  //AliasAnalysis::getAnalysisUsage(AU);
+  
+  
 }
 
 bool OffsetBasedAliasAnalysis::runOnModule(Module &M) {
@@ -71,7 +74,7 @@ bool OffsetBasedAliasAnalysis::runOnModule(Module &M) {
   t = clock();
   dotNum = 0;
   InitializeAliasAnalysis(this, &M.getDataLayout());
-  Offset::initialization(this);
+  IntraProceduralRA<Cousot> &ra = getAnalysis<IntraProceduralRA<Cousot> >();
   
   /// The first step of the program consists on 
   /// gathering all pointers and stores
@@ -82,7 +85,7 @@ bool OffsetBasedAliasAnalysis::runOnModule(Module &M) {
   /// the intra procedural pointer dependence graph
   DEBUG_WITH_TYPE("phases", errs() << "Building intra dependence graph\n");
   buildIntraProceduralDepGraph();
-  
+
   /// Getting narrowing information
   DEBUG_WITH_TYPE("phases", errs() << "Getting narrowing information\n");
   getNarrowingInfo();
@@ -318,6 +321,7 @@ void OffsetBasedAliasAnalysis::buildIntraProceduralDepGraph() {
   }
   for(auto i : offset_pointers) {
     i.second->addIntraProceduralAddresses(this);
+
     if(i.second->addr_empty())
       if(i.second->getPointerType() == OffsetPointer::Cont
       or i.second->getPointerType() == OffsetPointer::Phi)

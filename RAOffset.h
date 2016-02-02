@@ -19,7 +19,7 @@
 
 // project's includes
 #include "Offset.h"
-#include "../RangeAnalysis/RangeAnalysis.h"
+#include "RangeAnalysis.h"
 // llvm's includes
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/Support/raw_ostream.h"
@@ -69,11 +69,12 @@ public:
   /// \brief Prints the offset to a file
   void print(raw_fd_ostream& fs) override;
 
-  void initialization(OffsetBasedAliasAnalysis* Analysis);
+  static void initialization(OffsetBasedAliasAnalysis* Analysis);
+
+  static int* ra;
 
 private:
 
-  static IntraProceduralRA<Cousot>* ra;
   Range r;
 };
 

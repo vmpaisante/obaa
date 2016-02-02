@@ -14,7 +14,7 @@ LIBRARYNAME = OffsetBasedAliasAnalysis
 # dlopen/dlsym on the resulting library.
 LOADABLE_MODULE = 1
 
-CXXFLAGS += -std=c++0x -fpermissive 
+CXXFLAGS += -std=c++0x 
 
 # Include the makefile implementation stuff
 include $(LEVEL)/Makefile.common

@@ -20,8 +20,8 @@ using namespace llvm;
 //Functions someone should alter to add a new offset representation
 //===--------------------------------------------------------------------===//
 /// \brief Add custom offset representation initialization
-void initialization(OffsetBasedAliasAnalysis* Analysis) {
-  
+void Offset::initialization(OffsetBasedAliasAnalysis* Analysis) {
+  RAOffset::initialization(Analysis);
 }
   
 /// \brief Add custom offset representation to reps for use in obaa.
@@ -42,8 +42,6 @@ Offset::Offset(const Value* A, const Value* B) {
 /// \brief Add custom offset representation required analyses
 void Offset::getAnalysisUsage(AnalysisUsage &AU) {
   // AU.addRequired<RequiredAnalysis>();
-
-  AU.addRequired<IntraProceduralRA<Cousot> >();
 }
   
 //Functions that should be left alone on creating new offset representation

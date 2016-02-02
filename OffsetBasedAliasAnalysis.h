@@ -32,7 +32,7 @@ public:
   /// LLVM framework methods and atributes
   static char ID; // Class identification, replacement for typeinfo
   OffsetBasedAliasAnalysis() : ModulePass(ID){}
-  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const override;
   bool runOnModule(Module &M) override;
   
   /// Alias Analysis framework methods
