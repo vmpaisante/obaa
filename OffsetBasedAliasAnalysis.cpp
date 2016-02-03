@@ -62,8 +62,8 @@ static RegisterAnalysisGroup<AliasAnalysis> E(X);
 
 void OffsetBasedAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
-  AU.addRequired<IntraProceduralRA<Cousot> >();
-  //AliasAnalysis::getAnalysisUsage(AU);
+  AU.addRequired<InterProceduralRA<Cousot> >();
+  AliasAnalysis::getAnalysisUsage(AU);
   
   
 }
@@ -74,7 +74,7 @@ bool OffsetBasedAliasAnalysis::runOnModule(Module &M) {
   t = clock();
   dotNum = 0;
   InitializeAliasAnalysis(this, &M.getDataLayout());
-  IntraProceduralRA<Cousot> &ra = getAnalysis<IntraProceduralRA<Cousot> >();
+  InterProceduralRA<Cousot> &ra = getAnalysis<InterProceduralRA<Cousot> >();
   
   /// The first step of the program consists on 
   /// gathering all pointers and stores
