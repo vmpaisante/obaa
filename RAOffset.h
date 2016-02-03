@@ -74,7 +74,7 @@ public:
   static int* ra;
 
 private:
-
+  static InterProceduralRA<Cousot>* ra;
   Range r;
 };
 

@@ -13,6 +13,7 @@
 #include "Offset.h"
 #include "RAOffset.h"
 #include "OffsetBasedAliasAnalysis.h"
+#include "RangeAnalysis.h"
 // llvm's includes
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/Support/raw_ostream.h"
@@ -60,4 +61,6 @@ void RAOffset::print() { r.print(errs()); }
 void RAOffset::print(raw_fd_ostream& fs) { r.print(fs); }
 
 
-void RAOffset::initialization(OffsetBasedAliasAnalysis* Analysis) { }
+void RAOffset::initialization(OffsetBasedAliasAnalysis* Analysis) {
+  RAOffset::ra = &(Analysis->getAnalysis<InterProceduralRA<Cousot> >());
+}

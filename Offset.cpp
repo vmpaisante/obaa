@@ -42,6 +42,8 @@ Offset::Offset(const Value* A, const Value* B) {
 /// \brief Add custom offset representation required analyses
 void Offset::getAnalysisUsage(AnalysisUsage &AU) {
   // AU.addRequired<RequiredAnalysis>();
+
+  AU.addRequired<InterProceduralRA<Cousot> >();
 }
   
 //Functions that should be left alone on creating new offset representation

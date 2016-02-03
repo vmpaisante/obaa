@@ -17,7 +17,6 @@
 #include "Narrowing.h"
 #include "Offset.h"
 #include "OffsetPointer.h"
-#include "RangeAnalysis.h"
 // llvm includes
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -62,7 +61,7 @@ static RegisterAnalysisGroup<AliasAnalysis> E(X);
 
 void OffsetBasedAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
-  AU.addRequired<InterProceduralRA<Cousot> >();
+  Offset::getAnalysisUsage(AU);
   AliasAnalysis::getAnalysisUsage(AU);
   
   
@@ -74,7 +73,7 @@ bool OffsetBasedAliasAnalysis::runOnModule(Module &M) {
   t = clock();
   dotNum = 0;
   InitializeAliasAnalysis(this, &M.getDataLayout());
-  InterProceduralRA<Cousot> &ra = getAnalysis<InterProceduralRA<Cousot> >();
+  Offset::initialization(this);
   
   /// The first step of the program consists on 
   /// gathering all pointers and stores
