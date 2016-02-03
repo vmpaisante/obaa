@@ -37,7 +37,11 @@ RAOffset::RAOffset(const Value* Pointer, const Value* Base) : r(Zero, Zero) { }
 RAOffset::~RAOffset() { }
 
 /// \brief Returns a copy of the represented offset
-RAOffset* RAOffset::copy() { return new RAOffset(); }
+RAOffset* RAOffset::copy() {
+  RAOffset* copy = new RAOffset();
+  copy->r = r;
+  return copy;
+}
 
 /// \brief Adds two offsets of the respective representation
 RAOffset* RAOffset::add(OffsetRepresentation* Other) { return new RAOffset(); }

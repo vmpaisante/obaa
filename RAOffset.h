@@ -71,8 +71,6 @@ public:
 
   static void initialization(OffsetBasedAliasAnalysis* Analysis);
 
-  static int* ra;
-
 private:
   static InterProceduralRA<Cousot>* ra;
   Range r;
