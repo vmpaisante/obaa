@@ -75,7 +75,11 @@ Offset Offset::operator+(const Offset& Other) const {
   Offset result;
   for (auto i : result.reps) {
     const int ID = i.first;
+    OffsetRepresentation* aux;
+    aux = result.reps[ID];
     result.reps[ID] = reps.at(ID)->add(Other.reps.at(ID));
+    /// since add returns a new object, the old one must be deleted
+    delete aux;
   }
   return result;
   
@@ -97,8 +101,12 @@ void Offset::narrow(const NarrowingOp& Narrowing_op, OffsetPointer* Base) {
       Offset narrowing_offset = ad->getOffset() + Narrowing_op.context;
       for (auto i : reps) {
         const int ID = i.first;
+        OffsetRepresentation* aux;
+        aux = reps[ID];
         reps[ID] = i.second->narrow(Narrowing_op.cmp_op, 
           narrowing_offset.reps.at(ID));
+        /// since narrow returns a new object, the old one must be deleted
+        delete aux;
       }   
     }
   }
@@ -108,8 +116,12 @@ void Offset::narrow(const NarrowingOp& Narrowing_op, OffsetPointer* Base) {
 void Offset::widen(const WideningOp& Widening_op) { 
   for (auto i : reps) {
     const int ID = i.first;
+    OffsetRepresentation* aux;
+    aux = reps[ID];
     reps[ID] = i.second->widen(Widening_op.before.reps.at(ID), 
       Widening_op.after.reps.at(ID));
+    /// since widen returns a new object, the old one must be deleted
+    delete aux;
   }
 }
 
