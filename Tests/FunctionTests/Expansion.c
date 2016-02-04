@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 int main (int argc, char** argv) {
-  int* v = (int*) malloc(argc*sizeof(int));
-  v[0] = 0;
-  return v[0];
+  char* v = (char*) malloc(argc*sizeof(char));
+  v[1] = 0;
+  return v[1];
 }

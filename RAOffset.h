@@ -25,6 +25,7 @@
 #include "llvm/Support/raw_ostream.h"
 // libc includes
 #include <map>
+#include <vector>
 
 namespace llvm {
 
@@ -33,8 +34,38 @@ class AnalysisUsage;
 struct NarrowingOp;
 struct WideningOp;
 class Value;
+class Type;
 class OffsetPointer;
 class OffsetBasedAliasAnalysis;
+
+
+/// Representation of types as sequences of primitive values (now bits!)
+class Primitives {
+  public:
+  //Holds a Primitive Layout for a determined Type
+  struct PrimitiveLayout {
+    Type * type;
+    std::vector<int> layout;
+    PrimitiveLayout(Type* ty, std::vector<int> lay) {
+      type = ty;
+      layout = lay;
+    }
+  };
+  struct NumPrimitive {
+    Type * type;
+    int num;
+    NumPrimitive(Type* ty, int n) {
+      type = ty;
+      num = n;
+    }
+  };
+  std::vector<PrimitiveLayout*> PrimitiveLayouts;
+  std::vector<NumPrimitive*> NumPrimitives;
+  std::vector<int> getPrimitiveLayout(Type* type);
+  int getNumPrimitives(Type* type);
+  llvm::Type* getTypeInside(Type* type, int i);
+  int getSumBehind(std::vector<int> v, unsigned int i);
+};
 
 /// \brief Offset representation that uses range analysis
 class RAOffset : public OffsetRepresentation {
@@ -74,6 +105,10 @@ public:
 private:
   static InterProceduralRA<Cousot>* ra;
   Range r;
+  static Primitives P;
+  /// This function processes the indexes of a GEP operation and returns
+  /// the actual bitwise range of its offset;
+  void processGEP(const Value* Base, const Use* idx_begin, const Use* idx_end);
 };
 
 }
