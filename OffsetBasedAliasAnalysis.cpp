@@ -63,8 +63,6 @@ void OffsetBasedAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   Offset::getAnalysisUsage(AU);
   AliasAnalysis::getAnalysisUsage(AU);
-  
-  
 }
 
 bool OffsetBasedAliasAnalysis::runOnModule(Module &M) {
@@ -726,6 +724,7 @@ void OffsetBasedAliasAnalysis::applyWidening() {
         a->offset.widen(wo.second);
         a->widened = true;
       }
+      a->widening_ops.clear();
     }
   }
 }
@@ -737,6 +736,7 @@ void OffsetBasedAliasAnalysis::applyNarrowing() {
       for(auto no : a->narrowing_ops) {
         a->offset.narrow(no.second, a->base);
       }
+      a->narrowing_ops.clear();
     }
   }
 }

@@ -17,6 +17,7 @@
 // llvm's includes
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/Pass.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Constants.h"
@@ -76,7 +77,63 @@ bool RAOffset::disjoint(OffsetRepresentation* Other) {
 
 /// \brief Narrows the offset of the respective representation
 RAOffset* RAOffset::narrow(CmpInst::Predicate Cmp, OffsetRepresentation* Other){
-  return this->copy();
+  RAOffset* result = new RAOffset();
+  RAOffset* other = static_cast<RAOffset*>(Other);
+  
+  if (Cmp == CmpInst::ICMP_EQ){
+    //The narrowed version is equal to other
+    result->r = Range(other->r.getLower(), other->r.getUpper());
+  } else if (Cmp == CmpInst::ICMP_NE) {
+    //The narrowed version is unequal to other
+    if (r.getLower().slt(other->r.getLower())
+    and r.getUpper().sgt(other->r.getUpper())) {
+      //Whole part
+      result->r = Range(r.getLower(), r.getUpper());
+    } else if (r.getLower().slt(other->r.getLower())) {
+      //Smaller part
+      if (r.getUpper().sgt(other->r.getLower())) {
+        result->r = Range(r.getLower(), other->r.getLower());
+      }
+      else {
+        result->r = Range(r.getLower(), r.getUpper());
+      }
+    } else if (r.getUpper().sgt(other->r.getUpper())) {
+      //Larger part
+      if (r.getLower().slt(other->r.getUpper())) {
+        result->r = Range(other->r.getUpper(), r.getUpper());
+      }
+      else {
+        result->r = Range(r.getLower(), r.getUpper());
+      }
+    } else {
+      result->r.setEmpty();
+    }
+  } else if (Cmp == CmpInst::ICMP_SGT) {
+    if(r.getLower().slt(other->r.getUpper())) {
+      result->r = Range(other->r.getUpper()+1, r.getUpper());
+    } else {
+      result->r = Range(r.getLower(), r.getUpper());
+    }
+  } else if (Cmp == CmpInst::ICMP_SLT) {
+    if (r.getUpper().sgt(other->r.getLower())) {
+      result->r = Range(r.getLower(), other->r.getLower()-1);
+    } else {
+      result->r = Range(r.getLower(), r.getUpper());
+    }
+  } else if (Cmp == CmpInst::ICMP_SLE) {
+    if (r.getUpper().sgt(other->r.getLower())) {
+      result->r = Range(r.getLower(), other->r.getLower());
+    } else {
+      result->r = Range(r.getLower(), r.getUpper());
+    }
+  } else if (Cmp == CmpInst::ICMP_SGE) {
+    if(r.getLower().slt(other->r.getUpper())) {
+      result->r = Range(other->r.getUpper(), r.getUpper());
+    } else {
+      result->r = Range(r.getLower(), r.getUpper());
+    }
+  }
+  return result;
 }
 
 /// \brief Widens the offset of the respective representation, Before and 
