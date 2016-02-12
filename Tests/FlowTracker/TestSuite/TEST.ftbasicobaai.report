@@ -1,0 +1,28 @@
+##=== TEST.ftbasicobaai.report - Report desc for aa tests ----*- perl -*-===##
+#
+# This file defines a report to be generated for the sra test.
+#
+##===----------------------------------------------------------------------------------------===##
+
+# Sort by name
+$SortCol = 1;
+$TrimRepeatedPrefix = 1;
+
+# These are the columns for the report.  The first entry is the header for the
+# column, the second is the regex to use to match the value.  Empty list create
+# seperators, and closures may be put in for custom processing.
+(
+# Name
+ ["Name" , '\'([^\']+)\' Program'],
+ [],
+ ["ControlEdges", '([0-9.]+).*Number control edges in dependence graph'],
+ ["DataEdges", '([0-9.]+).*Number data edges in dependence graph'],
+ ["Instructions", '([0-9.]+).*Number of instructions'],
+ ["JoinNodes", '([0-9.]+).*Number of Join Nodes'],
+ ["MemoryNodes", '([0-9.]+).*Number of memory nodes'],
+ ["OperationNodes", '([0-9.]+).*Number of operation nodes'],
+ ["VariableNodes", '([0-9.]+).*Number of variable nodes'],
+ [],
+ );
+
+

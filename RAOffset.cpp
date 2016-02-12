@@ -276,7 +276,9 @@ int Primitives::getNumPrimitives(Type* type) {
   } else {
     np = type->getPrimitiveSizeInBits();
     ///The type is not any one of the above or a primitive type
-    assert(np > 0 && "Unrecognized type");
+    // TODO: validate
+    if (np == 0) np = 1;
+    //assert(np > 0 && "Unrecognized type");
   }
   
   NumPrimitives.insert(NumPrimitives.end(), new NumPrimitive(type, np));
